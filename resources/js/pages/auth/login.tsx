@@ -1,10 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
+import type { FormEventHandler } from 'react';
 import InputError from '@/components/input-error';
-import AuthLayout from '@/layouts/auth-layout';
-import { FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AuthLayout from '@/layouts/auth-layout';
 
 export default function Login() {
     const { data, setData, post, processing, errors, reset } = useForm({

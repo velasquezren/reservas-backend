@@ -9,9 +9,7 @@ use App\Http\Controllers\Web\ReviewWebController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::redirect('/', '/login')->name('home');
 
 // ─── OTP Authentication (REMOVED) ───────────────────────────────────────────────
 // Using standard Laravel session auth instead.

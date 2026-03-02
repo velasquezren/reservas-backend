@@ -15,29 +15,53 @@ class PromotionWebController extends Controller
 {
     public function index(Request $request): Response
     {
-        $bid = $request->user()->business_id;
+        $bid   = $request->user()->business_id;
+        $today = now()->toDateString();
 
-        $promotions = Promotion::forBusiness($bid)
-            ->orderByDesc('created_at')
-            ->get()
+        $all = Promotion::forBusiness($bid)->orderByDesc('created_at')->get();
+
+        $promotions = $all->map(fn ($p) => [
+            'id'                => $p->id,
+            'name'              => $p->name,
+            'description'       => $p->description,
+            'code'              => $p->code,
+            'discount_type'     => $p->discount_type?->value,
+            'discount_value'    => $p->discount_value,
+            'starts_at'         => $p->starts_at?->format('Y-m-d'),
+            'ends_at'           => $p->ends_at?->format('Y-m-d'),
+            'max_uses'          => $p->max_uses,
+            'max_uses_per_user' => $p->max_uses_per_user,
+            'current_uses'      => $p->current_uses,
+            'is_active'         => $p->is_active,
+            'banner_url'        => $p->banner_path
+                ? \Illuminate\Support\Facades\Storage::url($p->banner_path)
+                : null,
+        ]);
+
+        $stats = [
+            'total'       => $all->count(),
+            'active'      => $all->where('is_active', true)
+                                 ->filter(fn ($p) => !$p->ends_at || $p->ends_at->gte(now()))
+                                 ->count(),
+            'total_uses'  => $all->sum('current_uses'),
+            'with_banner' => $all->whereNotNull('banner_path')->count(),
+        ];
+
+        $banners = $all
+            ->where('is_active', true)
+            ->filter(fn ($p) => !$p->ends_at || $p->ends_at->gte(now()))
+            ->whereNotNull('banner_path')
+            ->values()
             ->map(fn ($p) => [
-                'id'               => $p->id,
-                'name'             => $p->name,
-                'description'      => $p->description,
-                'code'             => $p->code,
-                'discount_type'    => $p->discount_type?->value,
-                'discount_value'   => $p->discount_value,
-                'starts_at'        => $p->starts_at?->format('Y-m-d'),
-                'ends_at'          => $p->ends_at?->format('Y-m-d'),
-                'max_uses'         => $p->max_uses,
-                'max_uses_per_user'=> $p->max_uses_per_user,
-                'current_uses'     => $p->current_uses,
-                'is_active'        => $p->is_active,
-                'banner_url'       => $p->banner_path ? \Illuminate\Support\Facades\Storage::url($p->banner_path) : null,
+                'id'  => $p->id,
+                'name'=> $p->name,
+                'url' => \Illuminate\Support\Facades\Storage::url($p->banner_path),
             ]);
 
         return Inertia::render('promotions/index', [
             'promotions' => $promotions,
+            'stats'      => $stats,
+            'banners'    => $banners,
         ]);
     }
 

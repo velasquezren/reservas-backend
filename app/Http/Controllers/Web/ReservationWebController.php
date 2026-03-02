@@ -19,7 +19,17 @@ class ReservationWebController extends Controller
 
     public function index(Request $request): Response
     {
-        $bid = $request->user()->business_id;
+        $bid   = $request->user()->business_id;
+        $today = now()->toDateString();
+
+        $base = fn () => Reservation::forBusiness($bid);
+
+        $stats = [
+            'today'       => $base()->whereDate('scheduled_date', $today)->count(),
+            'pending'     => $base()->where('status', ReservationStatus::Pending)->count(),
+            'confirmed'   => $base()->where('status', ReservationStatus::Confirmed)->count(),
+            'total_today' => $base()->whereDate('scheduled_date', $today)->sum('total_amount'),
+        ];
 
         $query = Reservation::forBusiness($bid)
             ->with(['user:id,name,phone', 'item:id,name'])
@@ -34,15 +44,15 @@ class ReservationWebController extends Controller
             $query->whereDate('scheduled_date', $date);
         }
 
-        $banners = \App\Models\Promotion::forBusiness($bid)
-            ->where('is_active', true)
-            ->whereNotNull('banner_path')
-            ->get()
-            ->map(fn($p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'url' => \Illuminate\Support\Facades\Storage::url($p->banner_path)
-            ]);
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('confirmation_code', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn ($u) => $u
+                      ->where('name', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%")
+                  );
+            });
+        }
 
         return Inertia::render('reservations/index', [
             'reservations' => $query->paginate(20)->withQueryString()->through(
@@ -63,8 +73,8 @@ class ReservationWebController extends Controller
                         : null,
                 ]
             ),
-            'filters' => $request->only(['status', 'date']),
-            'banners' => $banners,
+            'filters' => $request->only(['status', 'date', 'search']),
+            'stats'   => $stats,
         ]);
     }
 

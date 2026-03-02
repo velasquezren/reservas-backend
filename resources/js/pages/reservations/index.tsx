@@ -1,15 +1,18 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
-import { Calendar, Search, MapPin, Users, Banknote, Activity, Settings2, User, Hash, CalendarX } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import {
+    Calendar, Search, MapPin, Users, Banknote, Activity,
+    Settings2, User, Hash, CalendarX, Clock, CheckCircle2,
+    TrendingUp, X,
+} from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
 import type { BreadcrumbItem, PaginatedData, Reservation } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -17,13 +20,17 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Reservaciones', href: '/reservations' },
 ];
 
+type Stats = {
+    today: number;
+    pending: number;
+    confirmed: number;
+    total_today: number;
+};
+
 type Props = {
     reservations: PaginatedData<Pick<Reservation, 'id' | 'confirmation_code' | 'status' | 'scheduled_date' | 'start_time' | 'party_size' | 'total_amount' | 'user' | 'item' | 'source'>>;
-    filters: {
-        status?: string;
-        date?: string;
-    };
-    banners?: { id: string; name: string; url: string }[];
+    filters: { status?: string; date?: string; search?: string };
+    stats: Stats;
 };
 
 function formatBs(centavos: number) {
@@ -32,33 +39,55 @@ function formatBs(centavos: number) {
 
 function StatusBadge({ status }: { status: string }) {
     const map: Record<string, { label: string; className: string }> = {
-        pending: { label: 'Pendiente', className: 'bg-amber-100 text-amber-800 border-amber-200' },
-        confirmed: { label: 'Confirmada', className: 'bg-blue-100 text-blue-800 border-blue-200' },
-        completed: { label: 'Completada', className: 'bg-green-100 text-green-800 border-green-200' },
-        no_show: { label: 'No se presentó', className: 'bg-red-100 text-red-800 border-red-200' },
-        cancelled: { label: 'Cancelada', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+        pending:   { label: 'Pendiente',       className: 'bg-amber-100 text-amber-800 border-amber-200' },
+        confirmed: { label: 'Confirmada',       className: 'bg-blue-100 text-blue-800 border-blue-200' },
+        completed: { label: 'Completada',       className: 'bg-green-100 text-green-800 border-green-200' },
+        no_show:   { label: 'No se presentó',   className: 'bg-red-100 text-red-800 border-red-200' },
+        cancelled: { label: 'Cancelada',        className: 'bg-gray-100 text-gray-600 border-gray-200' },
     };
     const cfg = map[status] ?? { label: status, className: 'bg-gray-100 text-gray-600' };
-    return <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>{cfg.label}</span>;
+    return (
+        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
+            {cfg.label}
+        </span>
+    );
 }
 
-export default function ReservationsIndex({ reservations, filters, banners = [] }: Props) {
+const SOURCE_LABELS: Record<string, string> = {
+    app: 'App', web: 'Web', walk_in: 'Walk-in', phone: 'Teléfono',
+};
+
+export default function ReservationsIndex({ reservations, filters, stats }: Props) {
     const { flash } = usePage().props;
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
-    const [dateFilter, setDateFilter] = useState(filters.date || '');
+    const [dateFilter,   setDateFilter]   = useState(filters.date   || '');
+    const [searchValue,  setSearchValue]  = useState(filters.search || '');
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const applyFilters = useCallback((status: string, date: string) => {
+    const applyFilters = useCallback((status: string, date: string, search: string) => {
         router.get(
             '/reservations',
             {
                 status: status !== 'all' ? status : undefined,
-                date: date || undefined
+                date:   date   || undefined,
+                search: search || undefined,
             },
-            { preserveState: true }
+            { preserveState: true },
         );
     }, []);
 
-    const handleAction = (id: number, action: string) => {
+    const handleSearchChange = (val: string) => {
+        setSearchValue(val);
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        searchTimeout.current = setTimeout(() => applyFilters(statusFilter, dateFilter, val), 400);
+    };
+
+    const clearSearch = () => {
+        setSearchValue('');
+        applyFilters(statusFilter, dateFilter, '');
+    };
+
+    const handleAction = (id: string, action: string) => {
         if (confirm(`¿Estás seguro de marcar esta reserva como ${action}?`)) {
             router.patch(`/reservations/${id}/${action}`, {}, { preserveScroll: true });
         }
@@ -75,57 +104,111 @@ export default function ReservationsIndex({ reservations, filters, banners = [] 
                     </Alert>
                 )}
 
-                {banners && banners.length > 0 && (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {banners.map(banner => (
-                            <div key={banner.id} className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow">
-                                <img src={banner.url} alt={banner.name} className="h-32 w-full object-cover" />
-                                <div className="p-3 bg-muted/30">
-                                    <p className="text-sm font-medium">{banner.name}</p>
-                                </div>
+                {/* ── Stats Cards ─────────────────────────────────────────── */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-5">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-100">
+                                <Calendar className="h-5 w-5 text-violet-600" />
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <div>
+                                <p className="text-xs text-muted-foreground">Reservas Hoy</p>
+                                <p className="text-2xl font-bold">{stats.today}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-5">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100">
+                                <Clock className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Pendientes</p>
+                                <p className="text-2xl font-bold">{stats.pending}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-5">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100">
+                                <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Confirmadas</p>
+                                <p className="text-2xl font-bold">{stats.confirmed}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-5">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+                                <TrendingUp className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Total Hoy</p>
+                                <p className="text-2xl font-bold">{formatBs(stats.total_today)}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
+                {/* ── Table Card ──────────────────────────────────────────── */}
                 <Card>
                     <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <CardTitle>Gestión de Reservas</CardTitle>
 
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <div className="flex items-center gap-2">
-                                <Search className="h-4 w-4 text-muted-foreground" />
-                                <Select
-                                    value={statusFilter}
-                                    onValueChange={(val) => {
-                                        setStatusFilter(val);
-                                        applyFilters(val, dateFilter);
-                                    }}
-                                >
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Estado..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos los estados</SelectItem>
-                                        <SelectItem value="pending">Pendiente</SelectItem>
-                                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                                        <SelectItem value="completed">Completada</SelectItem>
-                                        <SelectItem value="no_show">No se presentó</SelectItem>
-                                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                        <div className="flex flex-wrap gap-2 items-center">
+                            {/* Search */}
+                            <div className="relative flex items-center">
+                                <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                <Input
+                                    className="pl-8 w-[220px] pr-8"
+                                    placeholder="Código, cliente, teléfono…"
+                                    value={searchValue}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                />
+                                {searchValue && (
+                                    <button
+                                        onClick={clearSearch}
+                                        className="absolute right-2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            {/* Status filter */}
+                            <Select
+                                value={statusFilter}
+                                onValueChange={(val) => {
+                                    setStatusFilter(val);
+                                    applyFilters(val, dateFilter, searchValue);
+                                }}
+                            >
+                                <SelectTrigger className="w-[170px]">
+                                    <SelectValue placeholder="Estado…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los estados</SelectItem>
+                                    <SelectItem value="pending">Pendiente</SelectItem>
+                                    <SelectItem value="confirmed">Confirmada</SelectItem>
+                                    <SelectItem value="completed">Completada</SelectItem>
+                                    <SelectItem value="no_show">No se presentó</SelectItem>
+                                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Date filter */}
+                            <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="date"
                                     value={dateFilter}
                                     onChange={(e) => {
                                         setDateFilter(e.target.value);
-                                        applyFilters(statusFilter, e.target.value);
+                                        applyFilters(statusFilter, e.target.value, searchValue);
                                     }}
-                                    className="w-[180px]"
+                                    className="w-[165px]"
                                 />
                                 {dateFilter && (
                                     <Button
@@ -133,27 +216,44 @@ export default function ReservationsIndex({ reservations, filters, banners = [] 
                                         size="sm"
                                         onClick={() => {
                                             setDateFilter('');
-                                            applyFilters(statusFilter, '');
+                                            applyFilters(statusFilter, '', searchValue);
                                         }}
                                     >
-                                        Limpiar
+                                        <X className="h-3.5 w-3.5" />
                                     </Button>
                                 )}
                             </div>
                         </div>
                     </CardHeader>
+
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-muted/50">
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Hash className="w-4 h-4" /> Código</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><User className="w-4 h-4" /> Cliente</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Espacio</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Fecha y Hora</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Users className="w-4 h-4" /> Pers.</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Total</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Activity className="w-4 h-4" /> Estado</div></TableHead>
-                                    <TableHead className="text-right font-semibold text-muted-foreground"><div className="flex items-center justify-end gap-2"><Settings2 className="w-4 h-4" /> Acciones</div></TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><Hash className="w-4 h-4" /> Código</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><User className="w-4 h-4" /> Cliente</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Espacio</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Fecha y Hora</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><Users className="w-4 h-4" /> Pers.</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Total</div>
+                                    </TableHead>
+                                    <TableHead className="font-semibold text-muted-foreground">
+                                        <div className="flex items-center gap-2"><Activity className="w-4 h-4" /> Estado</div>
+                                    </TableHead>
+                                    <TableHead className="text-right font-semibold text-muted-foreground">
+                                        <div className="flex items-center justify-end gap-2"><Settings2 className="w-4 h-4" /> Acciones</div>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -161,7 +261,7 @@ export default function ReservationsIndex({ reservations, filters, banners = [] 
                                     <TableRow>
                                         <TableCell colSpan={8} className="h-64 text-center">
                                             <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                                <CalendarX className="h-12 w-12 mb-4 text-muted/40" />
+                                                <CalendarX className="h-12 w-12 mb-4 opacity-30" />
                                                 <p className="text-lg font-medium text-foreground">No se encontraron reservas</p>
                                                 <p className="text-sm">Prueba ajustando los filtros de búsqueda.</p>
                                             </div>
@@ -170,38 +270,62 @@ export default function ReservationsIndex({ reservations, filters, banners = [] 
                                 ) : (
                                     reservations.data.map((r: any) => (
                                         <TableRow key={r.id}>
-                                            <TableCell className="font-mono text-xs font-semibold">{r.confirmation_code}</TableCell>
+                                            <TableCell className="font-mono text-xs font-semibold">
+                                                {r.confirmation_code}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="font-medium">{r.user?.name ?? '—'}</div>
                                                 <div className="text-xs text-muted-foreground">{r.user?.phone}</div>
-                                                {r.source === 'walk_in' && <Badge variant="outline" className="mt-1 text-[10px]">Walk-in</Badge>}
+                                                {r.source && r.source !== 'app' && (
+                                                    <Badge variant="outline" className="mt-1 text-[10px]">
+                                                        {SOURCE_LABELS[r.source] ?? r.source}
+                                                    </Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell>{r.item?.name ?? '—'}</TableCell>
                                             <TableCell>
                                                 <div className="whitespace-nowrap">{r.scheduled_date}</div>
-                                                <div className="text-muted-foreground">{r.start_time}</div>
+                                                <div className="text-xs text-muted-foreground">{r.start_time}</div>
                                             </TableCell>
                                             <TableCell>{r.party_size}</TableCell>
-                                            <TableCell className="whitespace-nowrap font-medium">{formatBs(r.total_amount)}</TableCell>
+                                            <TableCell className="whitespace-nowrap font-medium">
+                                                {formatBs(r.total_amount)}
+                                            </TableCell>
                                             <TableCell><StatusBadge status={r.status} /></TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     {r.status === 'pending' && (
                                                         <>
-                                                            <Button size="sm" onClick={() => handleAction(r.id, 'confirm')} className="bg-blue-600 hover:bg-blue-700">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleAction(r.id, 'confirm')}
+                                                                className="bg-blue-600 hover:bg-blue-700"
+                                                            >
                                                                 Confirmar
                                                             </Button>
-                                                            <Button size="sm" variant="destructive" onClick={() => handleAction(r.id, 'cancel')}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="destructive"
+                                                                onClick={() => handleAction(r.id, 'cancel')}
+                                                            >
                                                                 Cancelar
                                                             </Button>
                                                         </>
                                                     )}
                                                     {r.status === 'confirmed' && (
                                                         <>
-                                                            <Button size="sm" onClick={() => handleAction(r.id, 'complete')} className="bg-green-600 hover:bg-green-700">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleAction(r.id, 'complete')}
+                                                                className="bg-green-600 hover:bg-green-700"
+                                                            >
                                                                 Completar
                                                             </Button>
-                                                            <Button size="sm" variant="outline" onClick={() => handleAction(r.id, 'no-show')}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleAction(r.id, 'no-show')}
+                                                            >
                                                                 No-show
                                                             </Button>
                                                         </>
@@ -224,10 +348,13 @@ export default function ReservationsIndex({ reservations, filters, banners = [] 
                                     {reservations.links.map((link: any, i: number) => (
                                         <Button
                                             key={i}
-                                            variant={link.active ? "default" : "outline"}
+                                            variant={link.active ? 'default' : 'outline'}
                                             size="sm"
                                             disabled={!link.url}
-                                            onClick={() => link.url && router.get(link.url, {}, { preserveScroll: true, preserveState: true })}
+                                            onClick={() =>
+                                                link.url &&
+                                                router.get(link.url, {}, { preserveScroll: true, preserveState: true })
+                                            }
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}

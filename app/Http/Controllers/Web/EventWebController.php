@@ -15,25 +15,51 @@ class EventWebController extends Controller
 {
     public function index(Request $request): Response
     {
-        $bid = $request->user()->business_id;
+        $bid   = $request->user()->business_id;
+        $today = now()->toDateString();
 
-        $events = Event::query()
+        $all = Event::query()
             ->where('business_id', $bid)
             ->orderByDesc('starts_at')
-            ->get()
-            ->map(fn (Event $e) => [
-                'id'          => $e->id,
-                'business_id' => $e->business_id,
-                'name'        => $e->name,
-                'description' => $e->description,
-                'starts_at'   => $e->starts_at?->format('Y-m-d'),
-                'ends_at'     => $e->ends_at?->format('Y-m-d'),
-                'is_active'   => $e->is_active,
-                'banner_url'  => $e->banner_path ? Storage::url($e->banner_path) : null,
+            ->get();
+
+        $events = $all->map(fn (Event $e) => [
+            'id'          => $e->id,
+            'business_id' => $e->business_id,
+            'name'        => $e->name,
+            'description' => $e->description,
+            'starts_at'   => $e->starts_at?->format('Y-m-d'),
+            'ends_at'     => $e->ends_at?->format('Y-m-d'),
+            'is_active'   => $e->is_active,
+            'banner_url'  => $e->banner_path ? Storage::url($e->banner_path) : null,
+        ]);
+
+        $stats = [
+            'total'       => $all->count(),
+            'active'      => $all->where('is_active', true)
+                                 ->filter(fn ($e) => !$e->ends_at || $e->ends_at->gte(now()))
+                                 ->count(),
+            'upcoming'    => $all->where('is_active', true)
+                                 ->filter(fn ($e) => $e->starts_at && $e->starts_at->gt(now()))
+                                 ->count(),
+            'with_banner' => $all->whereNotNull('banner_path')->count(),
+        ];
+
+        $banners = $all
+            ->where('is_active', true)
+            ->filter(fn ($e) => !$e->ends_at || $e->ends_at->gte(now()))
+            ->whereNotNull('banner_path')
+            ->values()
+            ->map(fn ($e) => [
+                'id'   => $e->id,
+                'name' => $e->name,
+                'url'  => Storage::url($e->banner_path),
             ]);
 
         return Inertia::render('events/index', [
-            'events' => $events,
+            'events'  => $events,
+            'stats'   => $stats,
+            'banners' => $banners,
         ]);
     }
 

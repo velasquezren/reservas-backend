@@ -1,11 +1,11 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
+import AppLogo from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AppLogo from '@/components/app-logo';
 
 export default function ConfirmPassword() {
     const { data, setData, post, processing, errors, clearErrors } = useForm({
