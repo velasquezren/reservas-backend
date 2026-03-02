@@ -1,0 +1,62 @@
+---
+description: Reglas del panel administrativo de Reservas (Laravel 12 + React/Inertia + Inertia) con separación clara entre promociones y eventos.
+alwaysApply: true
+---
+
+# Reservas – Reglas del panel administrativo
+
+## Contexto del proyecto
+
+- Backend en Laravel 12, aplicación **solo administrativa** (no público).
+- Frontend con **React + Inertia** dentro de `resources/js`.
+- Se usa un diseño moderno tipo **dashboard**, con componentes reutilizables de UI (ShadCN / DaisyUI / Tailwind).
+
+## Principios generales
+
+- **Separación de responsabilidades**:
+  - Controladores API (`App\Http\Controllers\Api\V1\...`) solo para JSON.
+  - Controladores Web (`App\Http\Controllers\Web\...`) solo para vistas Inertia.
+  - Servicios (`App\Services\...`) para reglas de negocio no triviales.
+- **Tipado y recursos**:
+  - Exponer datos al frontend mediante `JsonResource` (`App\Http\Resources\Api\V1\...`) en vez de retornar modelos crudos.
+  - Mantener tipos de TypeScript en `resources/js` alineados con los recursos de Laravel.
+
+## Regla clave: Promociones vs Eventos
+
+- **Promociones**:
+  - Se almacenan en una tabla dedicada (`promotions`) y modelos relacionados (`Promotion`, `PromotionApplicable`, etc.).
+  - Están orientadas a **descuentos**: campos como `discount_type`, `discount_value`, límites de uso y vigencias.
+  - API de administración actual: rutas bajo `/api/v1/admin/businesses/{business}/promotions`.
+  - En la UI deben aparecer como **“Códigos de descuento / Promociones”**, nunca mezclados semánticamente con eventos de calendario.
+
+- **Eventos**:
+  - Deben ser una **entidad distinta** (modelo y tabla propios, por ejemplo `events` con modelo `Event`).
+  - Orientados a **campañas o temporadas** (nombre, descripción, rango de fechas, banner/portada, estado).
+  - No deben reutilizar campos de descuento (`discount_type`, `discount_value`, etc.).
+  - Deben tener su propia API administrativa (por ejemplo `/api/v1/admin/businesses/{business}/events`) y su propio controlador/servicio.
+
+- **No mezclar**:
+  - Evitar usar una misma tabla/modelo/DTO para representar cosas de naturaleza distinta (descuento vs campaña/evento).
+  - En React, no derivar “eventos” como un filtro de `promotions` (`discount_type === 'none'`), sino tener **hooks, tipos y rutas separados**.
+
+## Lineamientos de frontend (React + Inertia)
+
+- Mantener las páginas en `resources/js/pages` agrupadas por dominio:
+  - `pages/promotions/*` para promociones.
+  - `pages/events/*` para eventos.
+- Mantener rutas de `wayfinder` separadas:
+  - `routes/api/v1/admin/promotions/*` para promociones.
+  - `routes/api/v1/admin/events/*` para eventos.
+- Formularios:
+  - Formularios de promociones incluyen campos de descuento obligatorios y límites de uso.
+  - Formularios de eventos se enfocan en fechas, banner, título, descripción y estado, pero no campos de descuento.
+
+## Mejoras de calidad recomendadas
+
+- **Nombres claros**:
+  - Evitar pantallas con títulos ambiguos tipo “Promociones y Eventos” que mezclan conceptos; preferir menús separados.
+- **Validaciones consistentes**:
+  - Centralizar validación de promociones/eventos en Form Requests (`App\Http\Requests\...`) y reutilizarlas en controladores API.
+- **Cohesión UI**:
+  - Mantener patrones de diseño consistentes (mismas tarjetas, tablas, diálogos) para todas las secciones administrativas.
+
