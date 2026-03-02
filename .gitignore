@@ -26,6 +26,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-.agent
-.cursor
-.github
+/.agent
+/.cursor
+/.github
