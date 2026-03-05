@@ -28,7 +28,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('businesses/{business}/items',      [ItemController::class, 'index'])->name('items.index');
     Route::get('businesses/{business}/items/{item}', [ItemController::class, 'show'])->name('items.show');
 
+    // Guest reservation flow (No OTP required, auto-assign table)
+    Route::post('businesses/{business}/reservations', [\App\Http\Controllers\Api\V1\GuestReservationController::class, 'store'])->name('reservations.guest.store');
+
     Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
+
 
     // ─── Protected (Customer + Business owner) ────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {

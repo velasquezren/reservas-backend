@@ -132,7 +132,18 @@ export type PaginatedData<T> = {
 
 export type DashboardStats = {
     today_reservations: number;
+    today_guests: number;
     pending: number;
     upcoming_confirmed: number;
     revenue_month: number; // centavos
+    total_month: number;
+    avg_rating: number;
+};
+
+export type TopClient = {
+    user: { name: string; phone: string } | null;
+    total_reservations: number;
+    total_spent: number; // centavos
+    total_guests: number;
+    last_visit: string;
 };

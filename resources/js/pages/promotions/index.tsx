@@ -95,22 +95,22 @@ function CopyButton({ code }: { code: string }) {
 
 export default function PromotionsIndex({ promotions, stats, banners }: Props) {
     const { flash } = usePage().props;
-    const [isDialogOpen, setIsDialogOpen]   = useState(false);
-    const [bannerViewer, setBannerViewer]   = useState<string | null>(null);
-    const [editingPromo, setEditingPromo]   = useState<PromoRow | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [bannerViewer, setBannerViewer] = useState<string | null>(null);
+    const [editingPromo, setEditingPromo] = useState<PromoRow | null>(null);
 
     const { data, setData, processing, errors, reset, clearErrors } = useForm({
-        name:               '',
-        description:        '',
-        code:               '',
-        discount_type:      'percentage' as string | null,
-        discount_value:     0 as number | null,
-        starts_at:          new Date().toISOString().split('T')[0],
-        ends_at:            '',
-        max_uses:           '',
-        max_uses_per_user:  '',
-        is_active:          true,
-        banner_path:        null as File | null,
+        name: '',
+        description: '',
+        code: '',
+        discount_type: 'percentage' as string | null,
+        discount_value: 0 as number | null,
+        starts_at: new Date().toISOString().split('T')[0],
+        ends_at: '',
+        max_uses: '',
+        max_uses_per_user: '',
+        is_active: true,
+        banner_path: null as File | null,
     });
 
     const openCreateDialog = () => {
@@ -124,19 +124,19 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
     const openEditDialog = (promo: PromoRow) => {
         setEditingPromo(promo);
         setData({
-            name:              promo.name,
-            description:       promo.description || '',
-            code:              promo.code || '',
-            discount_type:     promo.discount_type || 'percentage',
-            discount_value:    promo.discount_type === 'fixed_amount'
+            name: promo.name,
+            description: promo.description || '',
+            code: promo.code || '',
+            discount_type: promo.discount_type || 'percentage',
+            discount_value: promo.discount_type === 'fixed_amount'
                 ? (promo.discount_value || 0) / 100
                 : (promo.discount_value || 0),
-            starts_at:         promo.starts_at ? promo.starts_at.split(' ')[0] : new Date().toISOString().split('T')[0],
-            ends_at:           promo.ends_at ? promo.ends_at.split(' ')[0] : '',
-            max_uses:          promo.max_uses?.toString() || '',
+            starts_at: promo.starts_at ? promo.starts_at.split(' ')[0] : new Date().toISOString().split('T')[0],
+            ends_at: promo.ends_at ? promo.ends_at.split(' ')[0] : '',
+            max_uses: promo.max_uses?.toString() || '',
             max_uses_per_user: promo.max_uses_per_user?.toString() || '',
-            is_active:         promo.is_active,
-            banner_path:       null,
+            is_active: promo.is_active,
+            banner_path: null,
         });
         clearErrors();
         setIsDialogOpen(true);
@@ -146,12 +146,12 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
         e.preventDefault();
         const payload = {
             ...data,
-            discount_value:    data.discount_type === 'fixed_amount'
+            discount_value: data.discount_type === 'fixed_amount'
                 ? Math.round((data.discount_value || 0) * 100)
                 : data.discount_value,
-            max_uses:          data.max_uses === '' ? null : parseInt(data.max_uses as string),
+            max_uses: data.max_uses === '' ? null : parseInt(data.max_uses as string),
             max_uses_per_user: data.max_uses_per_user === '' ? null : parseInt(data.max_uses_per_user as string),
-            ends_at:           data.ends_at === '' ? null : data.ends_at,
+            ends_at: data.ends_at === '' ? null : data.ends_at,
         };
         if (editingPromo) {
             router.post(`/promotions/${editingPromo.id}`, { _method: 'put', ...payload }, {
@@ -174,10 +174,10 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
 
     const today = new Date().toISOString().split('T')[0];
     const filtered = {
-        all:      promotions,
-        active:   promotions.filter(p => p.is_active && (!p.ends_at || p.ends_at >= today)),
+        all: promotions,
+        active: promotions.filter(p => p.is_active && (!p.ends_at || p.ends_at >= today)),
         inactive: promotions.filter(p => !p.is_active && (!p.ends_at || p.ends_at >= today)),
-        expired:  promotions.filter(p => !!p.ends_at && p.ends_at < today),
+        expired: promotions.filter(p => !!p.ends_at && p.ends_at < today),
     };
 
     const renderTable = (items: PromoRow[]) => (
@@ -185,7 +185,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
             <TableHeader>
                 <TableRow className="hover:bg-muted/50">
                     <TableHead className="font-semibold text-muted-foreground">
-                        <div className="flex items-center gap-2"><Hash className="w-4 h-4" /> CÃ“DIGO</div>
+                        <div className="flex items-center gap-2"><Hash className="w-4 h-4" /> CÓDIGO</div>
                     </TableHead>
                     <TableHead className="font-semibold text-muted-foreground">
                         <div className="flex items-center gap-2"><Tag className="w-4 h-4" /> Nombre / Detalle</div>
@@ -436,10 +436,10 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                     Expiradas <Badge variant="secondary" className="ml-1.5">{filtered.expired.length}</Badge>
                                 </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="all"      className="mt-0">{renderTable(filtered.all)}</TabsContent>
-                            <TabsContent value="active"   className="mt-0">{renderTable(filtered.active)}</TabsContent>
+                            <TabsContent value="all" className="mt-0">{renderTable(filtered.all)}</TabsContent>
+                            <TabsContent value="active" className="mt-0">{renderTable(filtered.active)}</TabsContent>
                             <TabsContent value="inactive" className="mt-0">{renderTable(filtered.inactive)}</TabsContent>
-                            <TabsContent value="expired"  className="mt-0">{renderTable(filtered.expired)}</TabsContent>
+                            <TabsContent value="expired" className="mt-0">{renderTable(filtered.expired)}</TabsContent>
                         </Tabs>
                     </CardContent>
                 </Card>

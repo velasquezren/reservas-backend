@@ -61,10 +61,14 @@ final class ReservationService
         $appliedPromo = null;
 
         $reservation = DB::transaction(function () use ($validated, $user, &$appliedPromo) {
-            // ── 1. Lock the item row ──────────────────────────────────────────
-            $item = Item::with('business')
-                ->lockForUpdate()
-                ->findOrFail($validated['item_id']);
+            // ── 1. Load the item row (lockForUpdate only on MySQL/Postgres) ───
+            $isSQLite = DB::connection()->getDriverName() === 'sqlite';
+
+            $itemQuery = Item::with('business');
+            if (! $isSQLite) {
+                $itemQuery->lockForUpdate();
+            }
+            $item = $itemQuery->findOrFail($validated['item_id']);
 
             // ── 2. Validate item & business ───────────────────────────────────
             if (! $item->business->canAcceptReservations()) {
@@ -113,9 +117,11 @@ final class ReservationService
             // Add pre-order menu item costs to base total
             $menuItemsData = [];
             foreach ($validated['items'] ?? [] as $orderItem) {
-                $menuItem = Item::where('type', ItemType::MenuItem->value)
-                    ->lockForUpdate()
-                    ->findOrFail($orderItem['item_id']);
+                $menuQuery = Item::where('type', ItemType::MenuItem->value);
+                if (! $isSQLite) {
+                    $menuQuery->lockForUpdate();
+                }
+                $menuItem = $menuQuery->findOrFail($orderItem['item_id']);
 
                 $subtotal       = $menuItem->base_price * $orderItem['quantity'];
                 $baseTotal     += $subtotal;
@@ -259,27 +265,37 @@ final class ReservationService
         int    $durationMinutes,
         ?string $excludeId = null,
     ): bool {
-        $newEnd = Carbon::parse($startTime)
-            ->addMinutes($durationMinutes)
-            ->format('H:i:s');
+        $newStart = Carbon::parse("{$date} {$startTime}");
+        $newEnd   = clone $newStart;
+        $newEnd->addMinutes($durationMinutes);
 
-        return Reservation::query()
+        // Fetch all active reservations for this item on this date and evaluate overlap in PHP.
+        // This avoids dialect-specific SQL functions (like DATE_ADD in MySQL vs datetime in SQLite)
+        $isSQLite = DB::connection()->getDriverName() === 'sqlite';
+
+        $reservations = Reservation::query()
             ->where('item_id', $itemId)
-            ->where('scheduled_date', $date)
+            ->whereDate('scheduled_date', $date)
             ->whereIn('status', [
                 ReservationStatus::Pending->value,
                 ReservationStatus::Confirmed->value,
             ])
             ->when($excludeId, fn (Builder $q) => $q->where('id', '!=', $excludeId))
-            ->where(function (Builder $q) use ($startTime, $newEnd, $date) {
-                // Overlap condition: existing.start < new.end AND existing.end > new.start
-                $q->whereRaw('start_time < ?', [$newEnd])
-                  ->whereRaw(
-                      "DATE_ADD(CONCAT(scheduled_date, ' ', start_time), INTERVAL duration_minutes MINUTE) > ?",
-                      ["{$date} {$startTime}"]
-                  );
-            })
-            ->lockForUpdate()
-            ->exists();
+            ->when(! $isSQLite, fn (Builder $q) => $q->lockForUpdate())
+            ->get(['id', 'scheduled_date', 'start_time', 'duration_minutes']);
+
+        foreach ($reservations as $res) {
+            // Reconstruct full DateTime for existing reservation
+            $existingStart = Carbon::parse("{$res->scheduled_date->format('Y-m-d')} {$res->start_time}");
+            $existingEnd   = clone $existingStart;
+            $existingEnd->addMinutes($res->duration_minutes);
+
+            // Overlap condition:
+            if ($existingStart < $newEnd && $existingEnd > $newStart) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

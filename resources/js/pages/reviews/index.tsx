@@ -118,9 +118,9 @@ export default function ReviewsIndex({ reviews }: Props) {
                                                 <StarRating rating={review.rating} />
                                             </TableCell>
                                             <TableCell>
-                                                <div className="text-sm italic text-gray-700">"{review.comment || 'Sin comentario dejado.'}"</div>
+                                                <div className="text-sm italic text-muted-foreground">"{review.comment || 'Sin comentario dejado.'}"</div>
                                                 {review.owner_reply && (
-                                                    <div className="mt-2 bg-gray-50 p-2 rounded-md border text-xs">
+                                                    <div className="mt-2 bg-muted/50 p-3 rounded-md border text-xs text-foreground">
                                                         <span className="font-semibold block text-primary mb-1">Tu respuesta:</span>
                                                         {review.owner_reply}
                                                     </div>
@@ -135,10 +135,10 @@ export default function ReviewsIndex({ reviews }: Props) {
                                                 <div className="flex justify-end gap-2">
                                                     {review.status === 'pending' && (
                                                         <>
-                                                            <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleAction(review.id, 'approve')} title="Aprobar y Mostrar">
+                                                            <Button size="sm" variant="outline" className="text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50 hover:bg-green-50 dark:hover:bg-green-900/20" onClick={() => handleAction(review.id, 'approve')} title="Aprobar y Mostrar">
                                                                 <Check className="h-4 w-4" />
                                                             </Button>
-                                                            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleAction(review.id, 'reject')} title="Rechazar y Ocultar">
+                                                            <Button size="sm" variant="outline" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleAction(review.id, 'reject')} title="Rechazar y Ocultar">
                                                                 <X className="h-4 w-4" />
                                                             </Button>
                                                         </>

@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Reservations
     Route::prefix('reservations')->name('reservations.')->group(function () {
         Route::get('/', [ReservationWebController::class, 'index'])->name('index');
+        Route::get('calendar', [ReservationWebController::class, 'calendar'])->name('calendar');
+        Route::get('api-events', [ReservationWebController::class, 'events'])->name('events');
         Route::patch('{reservation}/confirm', [ReservationWebController::class, 'confirm'])->name('confirm');
         Route::patch('{reservation}/complete', [ReservationWebController::class, 'complete'])->name('complete');
         Route::patch('{reservation}/no-show', [ReservationWebController::class, 'noShow'])->name('no-show');

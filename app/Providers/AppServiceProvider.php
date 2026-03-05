@@ -65,5 +65,9 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+
+        \Illuminate\Support\Facades\Gate::define('viewApiDocs', function (?App\Models\User $user) {
+            return app()->environment('local');
+        });
     }
 }

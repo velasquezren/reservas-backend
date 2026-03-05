@@ -78,6 +78,71 @@ class ReservationWebController extends Controller
         ]);
     }
 
+    public function calendar(Request $request): Response
+    {
+        return Inertia::render('reservations/calendar');
+    }
+
+    public function events(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $bid = $request->user()->business_id;
+        $start = $request->input('start');
+        $end = $request->input('end');
+
+        $query = Reservation::forBusiness($bid)
+            ->select([
+                'id',
+                'user_id',
+                'status',
+                'scheduled_date',
+                'start_time',
+                'party_size',
+                'confirmation_code'
+            ])
+            ->with(['user:id,name']);
+
+        if ($start) {
+            $query->where('scheduled_date', '>=', date('Y-m-d', strtotime($start)));
+        }
+        if ($end) {
+            $query->where('scheduled_date', '<=', date('Y-m-d', strtotime($end)));
+        }
+
+        $reservations = $query->get();
+
+        $events = $reservations->map(function ($r) {
+            $color = match($r->status->value) {
+                'pending' => '#f59e0b',
+                'confirmed' => '#3b82f6',
+                'completed' => '#10b981',
+                'cancelled' => '#ef4444',
+                'no_show' => '#6b7280',
+                default => '#3b82f6',
+            };
+
+            $date = $r->scheduled_date->format('Y-m-d');
+            // Assuming start_time is a string or castable to string, formatted as H:i:s or H:i
+            $time = substr((string) $r->start_time, 0, 5);
+            $startStr = "{$date}T{$time}:00";
+
+            return [
+                'id' => $r->id,
+                'title' => substr($r->start_time, 0, 5) . ' | ' . ($r->user->name ?? 'Cliente') . ' (' . $r->party_size . ' pax)',
+                'start' => $startStr,
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+                'textColor' => '#ffffff',
+                'url' => route('reservations.index', ['search' => $r->confirmation_code]),
+                'extendedProps' => [
+                    'status' => $r->status->value,
+                    'party_size' => $r->party_size,
+                ]
+            ];
+        });
+
+        return response()->json($events);
+    }
+
     public function confirm(Request $request, Reservation $reservation): RedirectResponse
     {
         $this->authorizeAccess($request, $reservation);

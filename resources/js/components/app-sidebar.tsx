@@ -16,47 +16,77 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const navGroups = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Panel',
+        items: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+        ],
     },
     {
-        title: 'Reservas',
-        href: '/reservations',
-        icon: CalendarCheck,
+        title: 'Operaciones',
+        items: [
+            {
+                title: 'Lista de Reservas',
+                href: '/reservations',
+                icon: CalendarCheck,
+            },
+            {
+                title: 'Calendario',
+                href: '/reservations/calendar',
+                icon: CalendarCheck,
+            },
+        ],
     },
     {
-        title: 'Categorías',
-        href: '/categories',
-        icon: FolderOpen,
+        title: 'Catálogo',
+        items: [
+            {
+                title: 'Categorías',
+                href: '/categories',
+                icon: FolderOpen,
+            },
+            {
+                title: 'Ítems',
+                href: '/items',
+                icon: Package2,
+            },
+        ],
     },
     {
-        title: 'Ítems',
-        href: '/items',
-        icon: Package2,
+        title: 'Marketing',
+        items: [
+            {
+                title: 'Promociones',
+                href: '/promotions',
+                icon: Percent,
+            },
+            {
+                title: 'Eventos',
+                href: '/events',
+                icon: CalendarCheck,
+            },
+        ],
     },
     {
-        title: 'Promociones',
-        href: '/promotions',
-        icon: Percent,
-    },
-    {
-        title: 'Eventos',
-        href: '/events',
-        icon: CalendarCheck,
-    },
-    {
-        title: 'Reseñas',
-        href: '/reviews',
-        icon: Star,
-    },
-    {
-        title: 'Usuarios',
-        href: '/users',
-        icon: Users,
-    },
+        title: 'Administración',
+        items: [
+            {
+                title: 'Reseñas',
+                href: '/reviews',
+                icon: Star,
+            },
+            {
+                title: 'Usuarios',
+                href: '/users',
+                icon: Users,
+            },
+        ],
+    }
 ];
 
 const footerNavItems: NavItem[] = [
@@ -83,7 +113,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                {navGroups.map((group) => (
+                    <NavMain key={group.title} title={group.title} items={group.items} />
+                ))}
             </SidebarContent>
 
             <SidebarFooter>
