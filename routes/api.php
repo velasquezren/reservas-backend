@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AnalyticsController;
+use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BusinessController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ItemController;
@@ -28,11 +29,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('businesses/{business}/items',      [ItemController::class, 'index'])->name('items.index');
     Route::get('businesses/{business}/items/{item}', [ItemController::class, 'show'])->name('items.show');
 
+    // Table availability check (public — used by Next.js to show free/occupied)
+    Route::get('businesses/{business}/availability', [AvailabilityController::class, 'index'])->name('availability.index');
+
     // Guest reservation flow (No OTP required, auto-assign table)
     Route::post('businesses/{business}/reservations', [\App\Http\Controllers\Api\V1\GuestReservationController::class, 'store'])->name('reservations.guest.store');
 
     Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
+    // Public events (for Next.js banners — only active events)
+    Route::get('businesses/{business}/events', [EventController::class, 'index'])->name('events.public.index');
 
     // ─── Protected (Customer + Business owner) ────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {

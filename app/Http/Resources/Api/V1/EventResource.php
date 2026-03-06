@@ -25,7 +25,7 @@ class EventResource extends JsonResource
             'ends_at'     => optional($this->ends_at)->toISOString(),
             'is_active'   => $this->is_active,
             'banner_url'  => $this->banner_path
-                ? url($this->banner_path)
+                ? (str_starts_with($this->banner_path, 'http') ? $this->banner_path : asset(str_starts_with($this->banner_path, 'storage/') ? $this->banner_path : 'storage/' . ltrim($this->banner_path, '/')))
                 : null,
 
             'created_at'  => optional($this->created_at)->toISOString(),

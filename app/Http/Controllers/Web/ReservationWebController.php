@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\ItemType;
+use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Web\StoreReservationRequest;
+use App\Models\Item;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Services\ReservationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,6 +59,36 @@ class ReservationWebController extends Controller
             });
         }
 
+        // ── Data for the manual reservation creation dialog ────────────────
+        $reservableItems = Item::forBusiness($bid)
+            ->where('type', ItemType::Reservable)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'capacity', 'duration_minutes', 'base_price'])
+            ->map(fn ($i) => [
+                'id'               => $i->id,
+                'name'             => $i->name,
+                'capacity'         => $i->capacity,
+                'duration_minutes' => $i->duration_minutes,
+                'base_price'       => $i->base_price,
+            ]);
+
+        $menuItems = Item::forBusiness($bid)
+            ->where('type', ItemType::MenuItem)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'base_price'])
+            ->map(fn ($i) => [
+                'id'         => $i->id,
+                'name'       => $i->name,
+                'base_price' => $i->base_price,
+            ]);
+
+        $clients = User::where('business_id', $bid)
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'phone' => $u->phone]);
+
         return Inertia::render('reservations/index', [
             'reservations' => $query->paginate(20)->withQueryString()->through(
                 fn ($r) => [
@@ -73,9 +108,32 @@ class ReservationWebController extends Controller
                         : null,
                 ]
             ),
-            'filters' => $request->only(['status', 'date', 'search']),
-            'stats'   => $stats,
+            'filters'          => $request->only(['status', 'date', 'search']),
+            'stats'            => $stats,
+            'reservable_items' => $reservableItems,
+            'menu_items'       => $menuItems,
+            'clients'          => $clients,
         ]);
+    }
+
+    public function store(StoreReservationRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $validated['source'] = ReservationSource::WalkIn->value;
+        $validated['business_id'] = $request->user()->business_id;
+
+        // Ensure the client and item belong to this business
+        $user = User::where('id', $validated['user_id'])
+            ->where('business_id', $validated['business_id'])
+            ->firstOrFail();
+
+        try {
+            $this->reservationService->create($validated, $user);
+        } catch (\Exception $e) {
+            return back()->withErrors(['form' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Reserva creada correctamente.');
     }
 
     public function calendar(Request $request): Response

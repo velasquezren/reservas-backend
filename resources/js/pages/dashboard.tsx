@@ -14,8 +14,12 @@ import {
     Crown,
     Phone,
     CalendarDays,
-
+    ChevronRight,
+    LayoutGrid,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 import {
     Area,
     AreaChart,
@@ -81,8 +85,9 @@ function formatBsAxis(centavos: number) {
 }
 
 function getInitials(name: string | null | undefined) {
-    if (!name) return '??';
+    if (typeof name !== 'string' || !name.trim()) return '??';
     return name
+        .trim()
         .split(' ')
         .filter(Boolean)
         .map((n) => n[0])
@@ -234,11 +239,24 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-                {flash.success && (
-                    <Alert>
-                        <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
+                {flash?.success && (
+                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+                        <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}
+
+                {/* Page Header */}
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
+                        <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+                        <p className="text-sm text-muted-foreground">
+                            {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es }).replace(/^\w/, c => c.toUpperCase())}
+                        </p>
+                    </div>
+                </div>
 
                 {/* ─── KPI Cards ──────────────────────────────────────────── */}
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -610,12 +628,11 @@ export default function Dashboard({
                                 Últimas reservas registradas en el sistema
                             </CardDescription>
                         </div>
-                        <Link
-                            href={reservations.index()}
-                            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
-                        >
-                            Ver todas <ArrowUpRight className="size-3.5" />
-                        </Link>
+                        <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" asChild>
+                            <Link href={reservations.index()}>
+                                Ver todas <ChevronRight className="h-3 w-3" />
+                            </Link>
+                        </Button>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>

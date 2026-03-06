@@ -1,15 +1,22 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { es } from 'date-fns/locale';
-import { format, isSameDay, parseISO, startOfMonth, endOfMonth, subMonths, addMonths, startOfWeek, endOfWeek } from 'date-fns';
-import { CalendarCheck, Clock, Users, ChevronRight, Loader2, ArrowRight } from 'lucide-react';
+import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { CalendarCheck, Clock, Users, ChevronRight, Loader2, ArrowRight, CalendarDays } from 'lucide-react';
+import type { BreadcrumbItem } from '@/types';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Reservaciones', href: '/reservations' },
+    { title: 'Calendario', href: '/reservations/calendar' },
+];
 
 interface ReservationEvent {
     id: number;
@@ -24,19 +31,17 @@ interface ReservationEvent {
     };
 }
 
-// Caché de Módulo para preservar el estado exacto (fechas y reservas) 
-// entre navegaciones (clics en el Sidebar) de Inertia sin re-descargar de 0.
+// Caché de módulo para preservar el estado entre navegaciones de Inertia
 const globalCache = {
     date: new Date() as Date | undefined,
     month: new Date(),
-    eventsByMonth: {} as Record<string, ReservationEvent[]>
+    eventsByMonth: {} as Record<string, ReservationEvent[]>,
 };
 
 export default function ReservationsCalendar() {
     const [date, setDateState] = useState<Date | undefined>(globalCache.date);
     const [month, setMonthState] = useState<Date>(globalCache.month);
 
-    // Iniciamos con los eventos cacheados si existen para hacer una carga visual instantánea
     const currentMonthKey = format(month, 'yyyy-MM');
     const [events, setEvents] = useState<ReservationEvent[]>(globalCache.eventsByMonth[currentMonthKey] || []);
     const [loading, setLoading] = useState(!globalCache.eventsByMonth[currentMonthKey]);
@@ -59,16 +64,12 @@ export default function ReservationsCalendar() {
 
             if (globalCache.eventsByMonth[monthKey]) {
                 setEvents(globalCache.eventsByMonth[monthKey]);
-                // Stale-while-revalidate: no ponemos loading a true porque ya tenemos datos
                 setLoading(false);
             } else {
                 setLoading(true);
             }
 
             try {
-                // Optimización: Solo traemos las semanas visibles en la cuadrícula del mes actual
-                // (incluyendo los días "grises" del final/principio usando startOfWeek y endOfWeek)
-                // Esto reduce drásticamente el payload y el tiempo de respuesta vs traer 3 meses.
                 const start = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
                 const end = endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
 
@@ -81,16 +82,13 @@ export default function ReservationsCalendar() {
                     setEvents(data);
                 }
             } catch (error) {
-                console.error("Error fetching reservation events", error);
+                console.error('Error fetching reservation events', error);
             } finally {
                 if (isMounted) setLoading(false);
             }
         };
 
-        // Debounce simple: por si el usuario presiona "Siguiente >" varias veces rápido, 
-        // no le hacemos spam al servidor.
         const timeoutId = setTimeout(fetchEvents, 300);
-
         return () => {
             isMounted = false;
             clearTimeout(timeoutId);
@@ -104,12 +102,9 @@ export default function ReservationsCalendar() {
             if (!map[dateKey]) map[dateKey] = [];
             map[dateKey].push(e);
         });
-
-        // Pre-ordenamos los eventos de cada día por hora para evitar hacerlo en cada render
         Object.values(map).forEach(dayList => {
             dayList.sort((a, b) => a.start.localeCompare(b.start));
         });
-
         return map;
     }, [events]);
 
@@ -123,11 +118,6 @@ export default function ReservationsCalendar() {
         return getEventsForDay(date);
     }, [date, eventsByDate]);
 
-    // Extract dates that have events to pass them as modifiers
-    const eventDates = useMemo(() => {
-        return Object.keys(eventsByDate).map(dateStr => parseISO(dateStr));
-    }, [eventsByDate]);
-
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
             pending: 'Pendiente',
@@ -137,6 +127,17 @@ export default function ReservationsCalendar() {
             no_show: 'No Show',
         };
         return labels[status] || status;
+    };
+
+    const getStatusVariant = (status: string): 'default' | 'secondary' | 'outline' | 'destructive' => {
+        const variants: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+            confirmed: 'default',
+            completed: 'secondary',
+            cancelled: 'destructive',
+            no_show: 'destructive',
+            pending: 'outline',
+        };
+        return variants[status] || 'outline';
     };
 
     const calendarComponents = useMemo(() => ({
@@ -169,175 +170,242 @@ export default function ReservationsCalendar() {
                     )}
                 </CalendarDayButton>
             );
-        }
+        },
     }), [eventsByDate]);
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Calendario', href: '/reservations/calendar' }]}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendario" />
 
-            <div className="flex h-full flex-1 flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Calendario</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Visualiza y gestiona las reservas organizadas por fecha.
-                    </p>
+            <div className="flex h-full flex-1 flex-col p-4 md:p-6 gap-6">
+
+                {/* Page Header */}
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
+                        <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold tracking-tight">Calendario de Reservas</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Visualiza y gestiona las reservas organizadas por fecha.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                    {/* Calendar View */}
-                    <div className="flex justify-center w-full">
-                        <Card className="shadow-xs w-full max-w-full overflow-hidden">
-                            <CardContent className="p-4 md:p-6 pb-2">
-                                <div className="flex justify-center">
-                                    <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        month={month}
-                                        onMonthChange={setMonth}
-                                        locale={es}
-                                        className="rounded-md mx-auto [--cell-size:3.5rem] sm:[--cell-size:4.5rem] lg:[--cell-size:5rem]"
-                                        components={calendarComponents}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+                    {/* ── Panel Calendario ── */}
+                    <div className="rounded-lg border overflow-hidden">
+                        {/* Mini-header del panel */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b">
+                            <div>
+                                <p className="text-sm font-medium">
+                                    {format(month, "MMMM yyyy", { locale: es }).replace(/^\w/, c => c.toUpperCase())}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {events.length > 0
+                                        ? `${events.length} reserva${events.length !== 1 ? 's' : ''} este mes`
+                                        : 'Sin reservas este mes'}
+                                </p>
+                            </div>
+                            {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                        </div>
+                        <div className="p-4 md:p-6 pb-4 flex justify-center">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={setDate}
+                                month={month}
+                                onMonthChange={setMonth}
+                                locale={es}
+                                className="rounded-md mx-auto [--cell-size:3.5rem] sm:[--cell-size:4.5rem] lg:[--cell-size:5rem]"
+                                components={calendarComponents}
+                            />
+                        </div>
                     </div>
 
-                    {/* Events List */}
-                    <div className="w-full">
-                        <Card className="h-[700px] flex flex-col shadow-xs">
-                            <CardHeader className="border-b bg-muted/20 pb-4">
-                                <CardTitle className="flex items-center gap-2 text-xl">
-                                    <CalendarCheck className="h-5 w-5 text-primary" />
-                                    Reservas del{' '}
-                                    {date ? format(date, "d 'de' MMMM, yyyy", { locale: es }) : "Día"}
-                                    {loading && <Loader2 className="h-4 w-4 ml-2 animate-spin text-muted-foreground" />}
-                                </CardTitle>
-                                <CardDescription>
-                                    {selectedDateEvents.length} {selectedDateEvents.length === 1 ? 'reserva encontrada' : 'reservas encontradas'}
-                                </CardDescription>
-                            </CardHeader>
+                    {/* ── Panel de Reservas del Día ── */}
+                    <div className="rounded-lg border overflow-hidden flex flex-col h-[700px]">
+                        {/* Header del panel */}
+                        <div className="shrink-0 flex items-start justify-between gap-2 px-4 py-3 border-b">
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <CalendarCheck className="h-4 w-4 shrink-0 text-primary" />
+                                    <p className="text-sm font-medium truncate">
+                                        {date
+                                            ? format(date, "EEEE d 'de' MMMM", { locale: es }).replace(/^\w/, c => c.toUpperCase())
+                                            : 'Selecciona un día'}
+                                    </p>
+                                    {loading && (
+                                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+                                    )}
+                                </div>
+                                {date && !loading && (
+                                    <p className="text-xs text-muted-foreground mt-0.5 pl-6">
+                                        {selectedDateEvents.length === 0
+                                            ? 'Sin reservas para este día'
+                                            : `${selectedDateEvents.length} reserva${selectedDateEvents.length !== 1 ? 's' : ''} encontrada${selectedDateEvents.length !== 1 ? 's' : ''}`}
+                                    </p>
+                                )}
+                            </div>
+                            {selectedDateEvents.length > 0 && (
+                                <Badge variant="secondary" className="shrink-0 tabular-nums">
+                                    {selectedDateEvents.length}
+                                </Badge>
+                            )}
+                        </div>
 
-                            <CardContent className="flex-1 p-0 overflow-hidden relative">
-                                <ScrollArea className={`h-[calc(700px-5rem)] transition-opacity duration-300 ${loading && selectedDateEvents.length === 0 ? 'opacity-50' : ''}`}>
-                                    {selectedDateEvents.length > 0 ? (
-                                        <div className="divide-y relative">
-                                            {selectedDateEvents.map((ev) => (
-                                                <button
-                                                    key={ev.id}
-                                                    type="button"
-                                                    onClick={() => setSelectedReservation(ev)}
-                                                    className="w-full text-left flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-6 hover:bg-muted/40 transition-colors group"
+                        {/* Lista de reservas */}
+                        <ScrollArea
+                            className={`flex-1 transition-opacity duration-300 ${loading && selectedDateEvents.length === 0 ? 'opacity-40' : 'opacity-100'}`}
+                        >
+                            {selectedDateEvents.length > 0 ? (
+                                <div className="divide-y">
+                                    {selectedDateEvents.map((ev) => (
+                                        <button
+                                            key={ev.id}
+                                            type="button"
+                                            onClick={() => setSelectedReservation(ev)}
+                                            className="w-full text-left flex items-center justify-between p-4 md:px-6 hover:bg-muted/40 transition-colors group"
+                                        >
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                {/* Hora */}
+                                                <div
+                                                    className="shrink-0 flex flex-col items-center justify-center h-12 w-12 rounded-lg text-xs font-semibold border"
+                                                    style={{
+                                                        borderColor: ev.backgroundColor + '40',
+                                                        backgroundColor: ev.backgroundColor + '15',
+                                                        color: ev.backgroundColor,
+                                                    }}
                                                 >
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="mt-1 shrink-0 flex flex-col items-center">
-                                                            <div className="text-sm font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-md flex items-center gap-1.5">
-                                                                <Clock className="h-3.5 w-3.5" />
-                                                                {format(parseISO(ev.start), "HH:mm")}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <h4 className="font-semibold text-base group-hover:text-primary transition-colors">
-                                                                    {ev.title.split('|')[1]?.trim() || ev.title}
-                                                                </h4>
-                                                                <div
-                                                                    className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.15)]"
-                                                                    style={{ backgroundColor: ev.backgroundColor }}
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                                <span className="flex items-center gap-1.5">
-                                                                    <Users className="h-4 w-4 text-primary/70" />
-                                                                    {ev.extendedProps.party_size} pax
-                                                                </span>
-                                                                <Badge variant="outline" className="capitalize text-xs font-normal">
-                                                                    {getStatusLabel(ev.extendedProps.status)}
-                                                                </Badge>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <Clock className="h-3 w-3 mb-0.5 opacity-70" />
+                                                    {format(parseISO(ev.start), "HH:mm")}
+                                                </div>
 
-                                                    <div className="hidden sm:flex text-muted-foreground group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                                                        <ChevronRight className="h-5 w-5" />
+                                                {/* Info */}
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                        <h4 className="font-medium text-sm leading-none group-hover:text-primary transition-colors truncate">
+                                                            {ev.title.split('|')[1]?.trim() || ev.title}
+                                                        </h4>
                                                     </div>
-                                                </button>
-                                            ))}
+                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                            <Users className="h-3 w-3" />
+                                                            {ev.extendedProps.party_size} pax
+                                                        </span>
+                                                        <Badge
+                                                            variant={getStatusVariant(ev.extendedProps.status)}
+                                                            className="text-[10px] px-1.5 py-0 h-4 font-normal capitalize"
+                                                        >
+                                                            {getStatusLabel(ev.extendedProps.status)}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all -translate-x-1 group-hover:translate-x-0" />
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center p-8">
+                                    {loading ? (
+                                        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                                            <p className="text-sm">Consultando agenda…</p>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 text-muted-foreground">
-                                            {loading ? (
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
-                                                    <p>Consultando agenda...</p>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="bg-muted/50 p-4 rounded-full mb-4">
-                                                        <CalendarCheck className="h-8 w-8 text-muted-foreground/70" />
-                                                    </div>
-                                                    <p className="text-lg font-medium text-foreground mb-1">Día libre</p>
-                                                    <p className="text-sm">No tienes ninguna reserva agendada para esta fecha.</p>
-                                                </>
-                                            )}
+                                        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed">
+                                                <CalendarCheck className="h-6 w-6 text-muted-foreground/60" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">Día libre</p>
+                                                <p className="text-xs mt-0.5">No hay reservas agendadas para esta fecha.</p>
+                                            </div>
                                         </div>
                                     )}
-                                </ScrollArea>
-                            </CardContent>
-                        </Card>
+                                </div>
+                            )}
+                        </ScrollArea>
                     </div>
                 </div>
             </div>
 
+            {/* ── Quick View Dialog ── */}
             <Dialog open={!!selectedReservation} onOpenChange={(open) => !open && setSelectedReservation(null)}>
                 <DialogContent className="sm:max-w-md">
                     {selectedReservation && (
                         <>
                             <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2 text-xl">
+                                <DialogTitle className="flex items-center gap-2">
                                     <div
-                                        className="w-3 h-3 rounded-full shadow-sm"
+                                        className="h-3 w-3 rounded-full shrink-0"
                                         style={{ backgroundColor: selectedReservation.backgroundColor }}
                                     />
-                                    Vista rápida de Reserva
+                                    Vista rápida
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Detalles programados para el {format(parseISO(selectedReservation.start), "d 'de' MMMM, yyyy", { locale: es })}
+                                    {format(parseISO(selectedReservation.start), "EEEE d 'de' MMMM, yyyy", { locale: es }).replace(/^\w/, c => c.toUpperCase())}
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="grid gap-6 py-4">
-                                <div className="flex flex-col gap-1 items-center justify-center py-6 bg-muted/30 rounded-lg border">
-                                    <Clock className="h-8 w-8 text-primary mb-2 opacity-80" />
-                                    <div className="text-3xl font-bold tracking-tight text-foreground">
+                            <Separator />
+
+                            <div className="grid gap-4 py-2">
+                                {/* Time Hero */}
+                                <div
+                                    className="flex flex-col items-center justify-center py-5 rounded-lg border"
+                                    style={{
+                                        borderColor: selectedReservation.backgroundColor + '30',
+                                        backgroundColor: selectedReservation.backgroundColor + '08',
+                                    }}
+                                >
+                                    <Clock
+                                        className="h-5 w-5 mb-2"
+                                        style={{ color: selectedReservation.backgroundColor }}
+                                    />
+                                    <div
+                                        className="text-4xl font-bold tracking-tight tabular-nums"
+                                        style={{ color: selectedReservation.backgroundColor }}
+                                    >
                                         {format(parseISO(selectedReservation.start), "HH:mm")}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">A nombre de</p>
-                                        <p className="text-base font-semibold">{selectedReservation.title.split('|')[1]?.trim() || 'Cliente Sin Nombre'}</p>
+                                {/* Detail grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+                                        <p className="text-xs text-muted-foreground">A nombre de</p>
+                                        <p className="text-sm font-semibold leading-snug">
+                                            {selectedReservation.title.split('|')[1]?.trim() || 'Sin nombre'}
+                                        </p>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Tamaño de Grupo</p>
-                                        <div className="flex items-center gap-2">
-                                            <Users className="h-4 w-4 text-primary" />
-                                            <span className="font-semibold">{selectedReservation.extendedProps.party_size} personas</span>
+                                    <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+                                        <p className="text-xs text-muted-foreground">Grupo</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <Users className="h-3.5 w-3.5 text-primary" />
+                                            <span className="text-sm font-semibold">
+                                                {selectedReservation.extendedProps.party_size} personas
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Estado</p>
-                                        <Badge variant="outline" className="capitalize text-sm w-fit border-primary/20 bg-primary/5">
+                                    <div className="rounded-lg border bg-muted/30 p-3 space-y-1 col-span-2">
+                                        <p className="text-xs text-muted-foreground">Estado</p>
+                                        <Badge
+                                            variant={getStatusVariant(selectedReservation.extendedProps.status)}
+                                            className="capitalize text-xs"
+                                        >
                                             {getStatusLabel(selectedReservation.extendedProps.status)}
                                         </Badge>
                                     </div>
                                 </div>
                             </div>
 
-                            <DialogFooter className="flex-col sm:flex-row gap-2 mt-2">
+                            <Separator />
+
+                            <DialogFooter className="gap-2">
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -347,13 +415,14 @@ export default function ReservationsCalendar() {
                                 </Button>
                                 <Button
                                     type="button"
+                                    className="gap-2"
                                     onClick={() => {
                                         setSelectedReservation(null);
                                         router.visit(selectedReservation.url);
                                     }}
-                                    className="gap-2"
                                 >
-                                    Ver Detalles Completos <ArrowRight className="h-4 w-4" />
+                                    Ver detalles
+                                    <ArrowRight className="h-4 w-4" />
                                 </Button>
                             </DialogFooter>
                         </>

@@ -1,0 +1,2764 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Laravel",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api"
+    }
+  ],
+  "paths": {
+    "/v1/businesses/{business}/availability": {
+      "get": {
+        "operationId": "v1.availability.index",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "duration",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 15,
+              "maximum": 480
+            }
+          },
+          {
+            "name": "party_size",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total_tables": {
+                          "type": "string"
+                        },
+                        "available_tables": {
+                          "type": "string"
+                        },
+                        "occupied_tables": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string"
+                        },
+                        "start_time": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "total_tables",
+                        "available_tables",
+                        "occupied_tables",
+                        "date",
+                        "start_time"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/v1/businesses": {
+      "get": {
+        "operationId": "v1.businesses.index",
+        "tags": [
+          "Business"
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated set of `BusinessResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BusinessResource"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "from": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "last_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "links": {
+                          "type": "array",
+                          "description": "Generated paginator links.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "label",
+                              "active"
+                            ]
+                          }
+                        },
+                        "path": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Base path for paginator generated URLs."
+                        },
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of items shown per page.",
+                          "minimum": 0
+                        },
+                        "to": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Number of the last item in the slice.",
+                          "minimum": 1
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total number of items being paginated.",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "from",
+                        "last_page",
+                        "links",
+                        "path",
+                        "per_page",
+                        "to",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}": {
+      "get": {
+        "operationId": "v1.businesses.show",
+        "tags": [
+          "Business"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`BusinessResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BusinessResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}/categories": {
+      "get": {
+        "operationId": "v1.categories.index",
+        "tags": [
+          "Category"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of `CategoryResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CategoryResource"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}/categories/{category}": {
+      "get": {
+        "operationId": "v1.categories.show",
+        "tags": [
+          "Category"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "description": "The category ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`CategoryResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}/reservations": {
+      "post": {
+        "operationId": "v1.reservations.guest.store",
+        "tags": [
+          "GuestReservation"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customer_name": {
+                    "type": "string",
+                    "description": "── Customer contact ──────────────────────────────────────────────",
+                    "maxLength": 255
+                  },
+                  "customer_phone": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "customer_email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "item_id": {
+                    "type": "string",
+                    "description": "── Table selection ───────────────────────────────────────────────\nNext.js must show the list of tables (GET /items where type=reservable)\nand send back the chosen table's item_id here."
+                  },
+                  "scheduled_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "── Slot ──────────────────────────────────────────────────────────"
+                  },
+                  "start_time": {
+                    "type": "string"
+                  },
+                  "party_size": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "duration_minutes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 15,
+                    "maximum": 480
+                  },
+                  "notes": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 500
+                  },
+                  "promo_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 50
+                  },
+                  "items": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "description": "── Pre-order menu items (optional) ───────────────────────────────\nThese are menu_item type items (food/drinks) the client orders ahead.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "item_id": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "notes": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 255
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "customer_name",
+                  "customer_phone",
+                  "item_id",
+                  "scheduled_date",
+                  "start_time",
+                  "party_size"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`ReservationResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReservationResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}/items": {
+      "get": {
+        "operationId": "v1.items.index",
+        "tags": [
+          "Item"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated set of `ItemResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ItemResource"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "from": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "last_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "links": {
+                          "type": "array",
+                          "description": "Generated paginator links.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "label",
+                              "active"
+                            ]
+                          }
+                        },
+                        "path": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Base path for paginator generated URLs."
+                        },
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of items shown per page.",
+                          "minimum": 0
+                        },
+                        "to": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Number of the last item in the slice.",
+                          "minimum": 1
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total number of items being paginated.",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "from",
+                        "last_page",
+                        "links",
+                        "path",
+                        "per_page",
+                        "to",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/businesses/{business}/items/{item}": {
+      "get": {
+        "operationId": "v1.items.show",
+        "tags": [
+          "Item"
+        ],
+        "parameters": [
+          {
+            "name": "business",
+            "in": "path",
+            "required": true,
+            "description": "The business ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "description": "The item ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`ItemResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ItemResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/reservations": {
+      "get": {
+        "operationId": "v1.reservations.index",
+        "tags": [
+          "Reservation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated set of `ReservationResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReservationResource"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "from": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "last_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "links": {
+                          "type": "array",
+                          "description": "Generated paginator links.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "label",
+                              "active"
+                            ]
+                          }
+                        },
+                        "path": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Base path for paginator generated URLs."
+                        },
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of items shown per page.",
+                          "minimum": 0
+                        },
+                        "to": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Number of the last item in the slice.",
+                          "minimum": 1
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total number of items being paginated.",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "from",
+                        "last_page",
+                        "links",
+                        "path",
+                        "per_page",
+                        "to",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1.reservations.store",
+        "tags": [
+          "Reservation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreReservationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`ReservationResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReservationResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/v1/reservations/{reservation}": {
+      "get": {
+        "operationId": "v1.reservations.show",
+        "tags": [
+          "Reservation"
+        ],
+        "parameters": [
+          {
+            "name": "reservation",
+            "in": "path",
+            "required": true,
+            "description": "The reservation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`ReservationResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReservationResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/reservations/{reservation}/cancel": {
+      "patch": {
+        "operationId": "v1.reservations.cancel",
+        "tags": [
+          "Reservation"
+        ],
+        "parameters": [
+          {
+            "name": "reservation",
+            "in": "path",
+            "required": true,
+            "description": "The reservation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`ReservationResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReservationResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/v1/reviews": {
+      "get": {
+        "operationId": "v1.reviews.index",
+        "tags": [
+          "Review"
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated set of `ReviewResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReviewResource"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "from": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "last_page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "links": {
+                          "type": "array",
+                          "description": "Generated paginator links.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "label",
+                              "active"
+                            ]
+                          }
+                        },
+                        "path": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Base path for paginator generated URLs."
+                        },
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of items shown per page.",
+                          "minimum": 0
+                        },
+                        "to": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Number of the last item in the slice.",
+                          "minimum": 1
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total number of items being paginated.",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "from",
+                        "last_page",
+                        "links",
+                        "path",
+                        "per_page",
+                        "to",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reservations/{reservation}/reviews": {
+      "post": {
+        "operationId": "v1.reviews.store",
+        "tags": [
+          "Review"
+        ],
+        "parameters": [
+          {
+            "name": "reservation",
+            "in": "path",
+            "required": true,
+            "description": "The reservation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`ReviewResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ReviewResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/v1/items/{item}/waitlist": {
+      "post": {
+        "operationId": "v1.waitlist.join",
+        "tags": [
+          "Waitlist"
+        ],
+        "parameters": [
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "description": "The item ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinWaitlistRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`WaitlistResource`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WaitlistResource"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1.waitlist.leave",
+        "tags": [
+          "Waitlist"
+        ],
+        "parameters": [
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "description": "The item ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "const": "Removido de la lista de espera."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BusinessResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "logo_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "average_rating": {
+            "type": "number"
+          },
+          "total_reviews": {
+            "type": "integer"
+          },
+          "categories": {
+            "type": "array",
+            "description": "Conditional relationship inclusion",
+            "items": {
+              "$ref": "#/components/schemas/CategoryResource"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "phone",
+          "email",
+          "address",
+          "timezone",
+          "status",
+          "description",
+          "logo_url",
+          "average_rating",
+          "total_reviews",
+          "created_at"
+        ],
+        "title": "BusinessResource"
+      },
+      "CategoryResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort_order": {
+            "type": "integer"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemResource"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "name",
+          "slug",
+          "description",
+          "image_url",
+          "sort_order",
+          "is_active",
+          "created_at"
+        ],
+        "title": "CategoryResource"
+      },
+      "DiscountType": {
+        "type": "string",
+        "description": "| |\n|---|\n| `percentage` <br/>  |\n| `fixed_amount` <br/> Fixed boliviano amount stored as centavos (integer × 100) |",
+        "enum": [
+          "percentage",
+          "fixed_amount"
+        ],
+        "title": "DiscountType"
+      },
+      "EventResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": "string"
+          },
+          "ends_at": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "banner_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "name",
+          "description",
+          "starts_at",
+          "ends_at",
+          "is_active",
+          "banner_url",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EventResource"
+      },
+      "ItemResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "category_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "base_price": {
+            "type": "integer"
+          },
+          "base_price_formatted": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "duration_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "variants": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {}
+          },
+          "sort_order": {
+            "type": "integer"
+          },
+          "category": {
+            "description": "Conditionals",
+            "$ref": "#/components/schemas/CategoryResource"
+          },
+          "pricing_rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PricingRuleResource"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "category_id",
+          "name",
+          "slug",
+          "description",
+          "image_url",
+          "type",
+          "status",
+          "base_price",
+          "base_price_formatted",
+          "capacity",
+          "duration_minutes",
+          "variants",
+          "sort_order",
+          "created_at"
+        ],
+        "title": "ItemResource"
+      },
+      "ItemStatus": {
+        "type": "string",
+        "description": "| |\n|---|\n| `active` <br/>  |\n| `inactive` <br/>  |\n| `draft` <br/> Draft items are not yet published and invisible to clients |",
+        "enum": [
+          "active",
+          "inactive",
+          "draft"
+        ],
+        "title": "ItemStatus"
+      },
+      "ItemType": {
+        "type": "string",
+        "description": "| |\n|---|\n| `reservable` <br/> Reservable space: table, private room, court, spa chair, etc. |\n| `menu_item` <br/> Menu product: dish, beverage, combo — used as pre-order on a reservation |",
+        "enum": [
+          "reservable",
+          "menu_item"
+        ],
+        "title": "ItemType"
+      },
+      "JoinWaitlistRequest": {
+        "type": "object",
+        "properties": {
+          "scheduled_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "party_size": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "scheduled_date",
+          "start_time",
+          "party_size"
+        ],
+        "title": "JoinWaitlistRequest"
+      },
+      "PricingRuleResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "override_price": {
+            "type": "integer"
+          },
+          "override_price_formatted": {
+            "type": "string"
+          },
+          "specific_date": {
+            "type": "string"
+          },
+          "day_of_week": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ends_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "name",
+          "override_price",
+          "override_price_formatted",
+          "specific_date",
+          "day_of_week",
+          "starts_at",
+          "ends_at",
+          "is_active"
+        ],
+        "title": "PricingRuleResource"
+      },
+      "PromotionResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discount_type": {
+            "type": "string"
+          },
+          "discount_value": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": "string"
+          },
+          "ends_at": {
+            "type": "string"
+          },
+          "max_uses": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_uses_per_user": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "current_uses": {
+            "type": "integer"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_valid": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "name",
+          "description",
+          "code",
+          "discount_type",
+          "discount_value",
+          "starts_at",
+          "ends_at",
+          "max_uses",
+          "max_uses_per_user",
+          "current_uses",
+          "is_active",
+          "is_valid",
+          "created_at"
+        ],
+        "title": "PromotionResource"
+      },
+      "ReplyReviewRequest": {
+        "type": "object",
+        "properties": {
+          "owner_reply": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "owner_reply"
+        ],
+        "title": "ReplyReviewRequest"
+      },
+      "ReservationItemResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "unit_price": {
+            "type": "integer"
+          },
+          "subtotal": {
+            "type": "string"
+          },
+          "subtotal_formatted": {
+            "type": "string"
+          },
+          "variant_snapshot": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {}
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "item": {
+            "$ref": "#/components/schemas/ItemResource"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "quantity",
+          "unit_price",
+          "subtotal",
+          "subtotal_formatted",
+          "variant_snapshot",
+          "notes"
+        ],
+        "title": "ReservationItemResource"
+      },
+      "ReservationResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "confirmation_code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "status_label": {
+            "type": "string",
+            "enum": [
+              "Pendiente",
+              "Confirmada",
+              "Completada",
+              "No se presentó",
+              "Cancelada"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "scheduled_date": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "party_size": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_amount": {
+            "type": "integer"
+          },
+          "total_formatted": {
+            "type": "string"
+          },
+          "discount_amount": {
+            "type": "integer"
+          },
+          "discount_formatted": {
+            "type": "string"
+          },
+          "price_snapshot": {
+            "type": "array",
+            "items": {}
+          },
+          "promo_snapshot": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {}
+          },
+          "confirmed_at": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "item": {
+            "description": "Conditional relationships",
+            "$ref": "#/components/schemas/ItemResource"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResource"
+          },
+          "business": {
+            "$ref": "#/components/schemas/BusinessResource"
+          },
+          "reservation_items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationItemResource"
+            }
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewResource"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "confirmation_code",
+          "status",
+          "status_label",
+          "source",
+          "scheduled_date",
+          "start_time",
+          "duration_minutes",
+          "party_size",
+          "notes",
+          "total_amount",
+          "total_formatted",
+          "discount_amount",
+          "discount_formatted",
+          "price_snapshot",
+          "promo_snapshot",
+          "confirmed_at",
+          "cancelled_at",
+          "completed_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReservationResource"
+      },
+      "ReservationSource": {
+        "type": "string",
+        "description": "| |\n|---|\n| `app` <br/>  |\n| `web` <br/>  |\n| `walk_in` <br/> Created by staff for a customer who walked in |\n| `phone` <br/> Created by staff based on a phone call |",
+        "enum": [
+          "app",
+          "web",
+          "walk_in",
+          "phone"
+        ],
+        "title": "ReservationSource"
+      },
+      "ReviewResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "integer"
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photos": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 0,
+                "maxItems": 0,
+                "additionalItems": false
+              }
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "owner_reply": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "replied_at": {
+            "type": "string"
+          },
+          "user": {
+            "description": "Conditional relationships",
+            "$ref": "#/components/schemas/UserResource"
+          },
+          "reservation": {
+            "$ref": "#/components/schemas/ReservationResource"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "rating",
+          "comment",
+          "photos",
+          "status",
+          "owner_reply",
+          "replied_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReviewResource"
+      },
+      "StoreCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "maxLength": 500
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "StoreCategoryRequest"
+      },
+      "StoreEventRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "banner_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "binary",
+            "contentMediaType": "application/octet-stream",
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "name",
+          "starts_at"
+        ],
+        "title": "StoreEventRequest"
+      },
+      "StoreItemRequest": {
+        "type": "object",
+        "properties": {
+          "category_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "maxLength": 500
+          },
+          "type": {
+            "$ref": "#/components/schemas/ItemType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ItemStatus"
+          },
+          "base_price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capacity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "centavos",
+            "minimum": 1
+          },
+          "duration_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 15,
+            "maximum": 480
+          },
+          "variants": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "type",
+          "base_price"
+        ],
+        "title": "StoreItemRequest"
+      },
+      "StorePromotionRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 50
+          },
+          "discount_type": {
+            "$ref": "#/components/schemas/DiscountType"
+          },
+          "discount_value": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "max_uses": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "max_uses_per_user": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "apply_to": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Optional applicability targets",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "item",
+                    "category"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "discount_type",
+          "discount_value",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "StorePromotionRequest"
+      },
+      "StoreReservationRequest": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "duration_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 15,
+            "maximum": 480
+          },
+          "party_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "promo_code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 50
+          },
+          "source": {
+            "$ref": "#/components/schemas/ReservationSource"
+          },
+          "items": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "item_id": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "variant": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "item_id",
+          "scheduled_date",
+          "start_time",
+          "party_size"
+        ],
+        "title": "StoreReservationRequest"
+      },
+      "StoreReviewRequest": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "photos": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 500
+            },
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "StoreReviewRequest"
+      },
+      "UpdateItemRequest": {
+        "type": "object",
+        "properties": {
+          "category_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "maxLength": 500
+          },
+          "type": {
+            "$ref": "#/components/schemas/ItemType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ItemStatus"
+          },
+          "base_price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capacity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "duration_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 15,
+            "maximum": 480
+          },
+          "variants": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "title": "UpdateItemRequest"
+      },
+      "UserResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone_verified_at": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "email",
+          "phone_verified_at",
+          "created_at"
+        ],
+        "title": "UserResource"
+      },
+      "WaitlistResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "scheduled_date": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "party_size": {
+            "type": "integer"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "notified_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ItemResource"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "business_id",
+          "scheduled_date",
+          "start_time",
+          "party_size",
+          "position",
+          "notified_at",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "WaitlistResource"
+      }
+    },
+    "responses": {
+      "ModelNotFoundException": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "ValidationException": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Errors overview."
+                },
+                "errors": {
+                  "type": "object",
+                  "description": "A detailed description of each field that failed validation.",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "message",
+                "errors"
+              ]
+            }
+          }
+        }
+      },
+      "AuthenticationException": {
+        "description": "Unauthenticated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "AuthorizationException": {
+        "description": "Authorization error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

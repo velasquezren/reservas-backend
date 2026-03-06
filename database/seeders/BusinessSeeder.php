@@ -106,12 +106,30 @@ class BusinessSeeder extends Seeder
 
     private function seedFogon(Business $business): void
     {
-        $mesas = Category::create([
+        $mesasPara2 = Category::create([
             'business_id' => $business->id,
-            'name'        => 'Mesas',
-            'slug'        => 'mesas-fogon',
-            'description' => 'Mesas disponibles en el salón principal.',
+            'name'        => 'Mesas para 2',
+            'slug'        => 'mesas-para-2-fogon',
+            'description' => 'Cómodas mesas ideales para parejas.',
             'sort_order'  => 1,
+            'is_active'   => true,
+        ]);
+
+        $mesasPara4 = Category::create([
+            'business_id' => $business->id,
+            'name'        => 'Mesas para 4',
+            'slug'        => 'mesas-para-4-fogon',
+            'description' => 'Mesas para familias o pequeños grupos.',
+            'sort_order'  => 2,
+            'is_active'   => true,
+        ]);
+
+        $mesasPara6 = Category::create([
+            'business_id' => $business->id,
+            'name'        => 'Mesas para 6+',
+            'slug'        => 'mesas-para-6-fogon',
+            'description' => 'Espacios grandes para celebraciones.',
+            'sort_order'  => 3,
             'is_active'   => true,
         ]);
 
@@ -120,7 +138,7 @@ class BusinessSeeder extends Seeder
             'name'        => 'Salones Privados',
             'slug'        => 'salones-privados-fogon',
             'description' => 'Ambientes privados para eventos y reuniones.',
-            'sort_order'  => 2,
+            'sort_order'  => 4,
             'is_active'   => true,
         ]);
 
@@ -129,15 +147,24 @@ class BusinessSeeder extends Seeder
             'name'        => 'Menú',
             'slug'        => 'menu-fogon',
             'description' => 'Platos para pre-ordenar con tu reserva.',
-            'sort_order'  => 3,
+            'sort_order'  => 5,
             'is_active'   => true,
         ]);
 
-        // Mesas reservables
-        $this->createTable($business, $mesas, 'Mesa para 2', 2, 0, 90);
-        $this->createTable($business, $mesas, 'Mesa para 4', 4, 0, 90);
-        $this->createTable($business, $mesas, 'Mesa para 6', 6, 5000, 120);
-        $this->createTable($business, $mesas, 'Mesa para 8', 8, 8000, 120);
+        // 15 Mesas para 2
+        for ($i = 1; $i <= 15; $i++) {
+            $this->createTable($business, $mesasPara2, "Mesa para 2 (#$i)", 2, 0, 90);
+        }
+
+        // 10 Mesas para 4
+        for ($i = 1; $i <= 10; $i++) {
+            $this->createTable($business, $mesasPara4, "Mesa para 4 (#$i)", 4, 0, 90);
+        }
+
+        // 5 Mesas para 6
+        for ($i = 1; $i <= 5; $i++) {
+            $this->createTable($business, $mesasPara6, "Mesa para 6 (#$i)", 6, 5000, 120);
+        }
 
         // Salón privado
         Item::create([

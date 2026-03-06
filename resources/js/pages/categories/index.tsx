@@ -1,15 +1,16 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { LayoutGrid, Pencil, Plus, Trash2, Tag } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Category } from '@/types';
 
@@ -55,7 +56,6 @@ export default function CategoriesIndex({ categories }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         if (editingCategory) {
             patch(`/categories/${editingCategory.id}`, {
                 onSuccess: () => setIsDialogOpen(false),
@@ -68,7 +68,7 @@ export default function CategoriesIndex({ categories }: Props) {
     };
 
     const handleDelete = (category: Props['categories'][0]) => {
-        if (confirm(`¿Estás seguro de eliminar la categoría "${category.name}"?\n¡Esta acción no se puede deshacer y podría fallar si tiene ítems asociados!`)) {
+        if (confirm(`¿Eliminar la categoría "${category.name}"?\nEsta acción no se puede deshacer y podría fallar si tiene ítems asociados.`)) {
             router.delete(`/categories/${category.id}`);
         }
     };
@@ -77,108 +77,159 @@ export default function CategoriesIndex({ categories }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Categorías" />
 
-            <div className="flex flex-1 flex-col gap-6 p-6">
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+
+                {/* Flash */}
                 {flash.success && (
-                    <Alert>
-                        <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
+                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+                        <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Gestión de Categorías</CardTitle>
-                        <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva Categoría
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
+                            <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-semibold tracking-tight">Categorías</h1>
+                            <p className="text-sm text-muted-foreground">Organiza tus mesas y menú por categorías.</p>
+                        </div>
+                    </div>
+                    <Button onClick={openCreateDialog} className="mt-3 gap-2 self-start sm:mt-0 sm:self-auto">
+                        <Plus className="h-4 w-4" /> Nueva Categoría
+                    </Button>
+                </div>
+
+                {/* Table */}
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-16 text-center">Orden</TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Descripción</TableHead>
+                                <TableHead className="text-center">Ítems</TableHead>
+                                <TableHead className="text-center">Estado</TableHead>
+                                <TableHead className="w-20 text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {categories.length === 0 ? (
                                 <TableRow>
-                                    <TableHead className="w-16 text-center">Orden</TableHead>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Descripción</TableHead>
-                                    <TableHead className="text-center">Ítems</TableHead>
-                                    <TableHead className="text-center">Estado</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
+                                    <TableCell colSpan={6}>
+                                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed mb-3">
+                                                <LayoutGrid className="h-5 w-5 text-muted-foreground/60" />
+                                            </div>
+                                            <p className="text-sm font-medium text-foreground">Sin categorías</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">Crea la primera para comenzar.</p>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {categories.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                                            No hay categorías registradas.
+                            ) : (
+                                categories.map((category) => (
+                                    <TableRow key={category.id} className="group">
+                                        <TableCell className="text-center font-medium tabular-nums">{category.sort_order}</TableCell>
+                                        <TableCell className="font-semibold">{category.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{category.description || <span className="italic text-muted-foreground/50">—</span>}</TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant="secondary">{category.items_count}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {category.is_active ? (
+                                                <Badge className="bg-green-100 text-green-700 border border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                                                    Activo
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-muted-foreground">Inactivo</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <TooltipProvider delayDuration={300}>
+                                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(category)}>
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Editar</TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                onClick={() => handleDelete(category)}
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Eliminar</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
+                                            </TooltipProvider>
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    categories.map((category) => (
-                                        <TableRow key={category.id}>
-                                            <TableCell className="text-center font-medium">{category.sort_order}</TableCell>
-                                            <TableCell className="font-semibold">{category.name}</TableCell>
-                                            <TableCell className="text-muted-foreground">{category.description || '—'}</TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant="secondary">{category.items_count}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                {category.is_active ? (
-                                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">Activo</Badge>
-                                                ) : (
-                                                    <Badge variant="outline" className="text-gray-500">Inactivo</Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(category)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
-            {/* Create/Edit Component Modal */}
+            {/* Create / Edit Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[440px]">
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
-                            <DialogDescription>
-                                {editingCategory
-                                    ? 'Modifica los datos de la categoría aquí.'
-                                    : 'Añade una nueva categoría para organizar tus mesas o menú.'}
-                            </DialogDescription>
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                                    <Tag className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <div>
+                                    <DialogTitle>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+                                    <DialogDescription>
+                                        {editingCategory
+                                            ? 'Modifica los datos de la categoría.'
+                                            : 'Añade una nueva categoría para organizar tus mesas o menú.'}
+                                    </DialogDescription>
+                                </div>
+                            </div>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
+
+                        <Separator className="my-4" />
+
+                        <div className="grid gap-5">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Nombre</Label>
+                                <Label htmlFor="name">
+                                    Nombre <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    placeholder="Ej. Terraza, Bebidas"
+                                    placeholder="Ej. Terraza, Bebidas…"
+                                    autoFocus
                                 />
-                                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="description">Descripción (opcional)</Label>
+                                <Label htmlFor="description">
+                                    Descripción{' '}
+                                    <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
+                                </Label>
                                 <Input
                                     id="description"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
-                                    placeholder="Breve detalle..."
+                                    placeholder="Breve descripción…"
                                 />
-                                {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
+                                {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -191,28 +242,33 @@ export default function CategoriesIndex({ categories }: Props) {
                                         value={data.sort_order}
                                         onChange={(e) => setData('sort_order', parseInt(e.target.value))}
                                     />
-                                    {errors.sort_order && <p className="text-sm text-red-500">{errors.sort_order}</p>}
+                                    {errors.sort_order && <p className="text-xs text-destructive">{errors.sort_order}</p>}
                                 </div>
 
-                                <div className="flex flex-col justify-center gap-2 pt-4">
-                                    <div className="flex items-center space-x-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="is_active">Visibilidad</Label>
+                                    <div className="flex h-9 items-center gap-2 rounded-md border bg-muted/40 px-3">
                                         <Switch
                                             id="is_active"
                                             checked={data.is_active}
                                             onCheckedChange={(checked) => setData('is_active', checked)}
                                         />
-                                        <Label htmlFor="is_active">Activo</Label>
+                                        <span className="text-sm text-muted-foreground">
+                                            {data.is_active ? 'Activo' : 'Inactivo'}
+                                        </span>
                                     </div>
-                                    {errors.is_active && <p className="text-sm text-red-500">{errors.is_active}</p>}
                                 </div>
                             </div>
                         </div>
+
+                        <Separator className="my-4" />
+
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={processing}>
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={processing}>
-                                {processing ? 'Guardando...' : 'Guardar'}
+                                {processing ? 'Guardando…' : editingCategory ? 'Guardar cambios' : 'Crear'}
                             </Button>
                         </DialogFooter>
                     </form>

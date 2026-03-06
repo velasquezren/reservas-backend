@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -214,7 +215,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                             <div className="flex flex-col items-center justify-center text-muted-foreground">
                                 <Ticket className="h-10 w-10 mb-3 opacity-30" />
                                 <p className="text-base font-medium text-foreground">Sin resultados</p>
-                                <p className="text-sm">No hay promociones en esta categorÃ­a.</p>
+                                <p className="text-sm">No hay promociones en esta categoría.</p>
                             </div>
                         </TableCell>
                     </TableRow>
@@ -222,7 +223,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                     items.map((promo) => {
                         const expired = isExpired(promo);
                         return (
-                            <TableRow key={promo.id} className={expired ? 'opacity-60' : ''}>
+                            <TableRow key={promo.id} className={`group ${expired ? 'opacity-60' : ''}`}>
                                 <TableCell>
                                     <div className="flex items-center font-mono font-bold text-primary">
                                         {promo.code || 'â€”'}
@@ -277,29 +278,36 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                     )}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <div className="flex justify-end gap-1">
-                                        {promo.banner_url && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setBannerViewer(promo.banner_url!)}
-                                                className="text-muted-foreground hover:text-foreground"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(promo)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDelete(promo)}
-                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <TooltipProvider delayDuration={300}>
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {promo.banner_url && (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setBannerViewer(promo.banner_url!)}>
+                                                            <Eye className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Ver banner</TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(promo)}>
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Editar</TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(promo)}>
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Eliminar</TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </TooltipProvider>
                                 </TableCell>
                             </TableRow>
                         );
@@ -313,76 +321,51 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Promociones" />
 
-            <div className="flex flex-1 flex-col gap-6 p-6">
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 {flash.success && (
-                    <Alert>
-                        <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
+                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+                        <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}
 
-                {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Promociones</h1>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                            Gestiona descuentos, códigos promocionales y banners publicitarios.
-                        </p>
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
+                            <Tag className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-semibold tracking-tight">Promociones</h1>
+                            <p className="text-sm text-muted-foreground">Gestiona descuentos, códigos promocionales y banners.</p>
+                        </div>
                     </div>
-                    <Button onClick={openCreateDialog}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Promoción
+                    <Button onClick={openCreateDialog} className="mt-3 gap-2 self-start sm:mt-0 sm:self-auto">
+                        <Plus className="h-4 w-4" /> Nueva Promoción
                     </Button>
                 </div>
 
-                {/* â”€â”€ Stats Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* Stat Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-5">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-100">
-                                <Tag className="h-5 w-5 text-violet-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Total creadas</p>
-                                <p className="text-2xl font-bold">{stats.total}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-5">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
-                                <Zap className="h-5 w-5 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Activas ahora</p>
-                                <p className="text-2xl font-bold">{stats.active}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-5">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100">
-                                <BarChart3 className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Usos totales</p>
-                                <p className="text-2xl font-bold">{stats.total_uses}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-5">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100">
-                                <Image className="h-5 w-5 text-orange-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Con banner</p>
-                                <p className="text-2xl font-bold">{stats.with_banner}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {[
+                        { label: 'Total creadas', value: stats.total, icon: Tag, bg: 'bg-violet-100 dark:bg-violet-900/30', color: 'text-violet-600 dark:text-violet-400' },
+                        { label: 'Activas ahora', value: stats.active, icon: Zap, bg: 'bg-emerald-100 dark:bg-emerald-900/30', color: 'text-emerald-600 dark:text-emerald-400' },
+                        { label: 'Usos totales', value: stats.total_uses, icon: BarChart3, bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' },
+                        { label: 'Con banner', value: stats.with_banner, icon: Image, bg: 'bg-amber-100 dark:bg-amber-900/30', color: 'text-amber-600 dark:text-amber-400' },
+                    ].map(kpi => (
+                        <Card key={kpi.label} className="border-dashed">
+                            <CardContent className="flex items-center gap-3 p-4">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${kpi.bg}`}>
+                                    <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold leading-none tabular-nums">{kpi.value}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{kpi.label}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
 
-                {/* â”€â”€ Active Banners Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 {banners.length > 0 && (
                     <div>
                         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -415,7 +398,6 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                     </div>
                 )}
 
-                {/* â”€â”€ Promotions Table (tabbed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Listado de Promociones</CardTitle>
@@ -445,7 +427,6 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                 </Card>
             </div>
 
-            {/* â”€â”€ Banner Viewer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <Dialog open={!!bannerViewer} onOpenChange={(o) => !o && setBannerViewer(null)}>
                 <DialogContent className="sm:max-w-2xl bg-transparent border-none shadow-none">
                     <DialogTitle className="sr-only">Visualizar Banner</DialogTitle>
@@ -461,22 +442,30 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                 </DialogContent>
             </Dialog>
 
-            {/* â”€â”€ Create / Edit Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-[520px]">
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>{editingPromo ? 'Editar Promoción' : 'Nueva Promoción'}</DialogTitle>
-                            <DialogDescription>
-                                Los clientes podrán usar este código al realizar una reserva online.
-                            </DialogDescription>
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-900/30">
+                                    <Ticket className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                                </div>
+                                <div>
+                                    <DialogTitle>{editingPromo ? 'Editar Promoción' : 'Nueva Promoción'}</DialogTitle>
+                                    <DialogDescription>
+                                        Los clientes podrán usar este código al realizar una reserva online.
+                                    </DialogDescription>
+                                </div>
+                            </div>
                         </DialogHeader>
 
-                        <div className="grid gap-4 py-4">
+                        <Separator className="my-4" />
+
+                        <div className="grid gap-4">
                             {/* Code + Name */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="code">Código (Ej. VERANO24) *</Label>
+                                    <Label htmlFor="code">Código (Ej. VERANO24) <span className="text-destructive">*</span></Label>
                                     <Input
                                         id="code"
                                         value={data.code}
@@ -485,10 +474,10 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                         maxLength={20}
                                         className="font-mono uppercase"
                                     />
-                                    {errors.code && <p className="text-sm text-red-500">{errors.code}</p>}
+                                    {errors.code && <p className="text-xs text-destructive">{errors.code}</p>}
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Nombre Comercial *</Label>
+                                    <Label htmlFor="name">Nombre Comercial <span className="text-destructive">*</span></Label>
                                     <Input
                                         id="name"
                                         value={data.name}
@@ -497,7 +486,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                         maxLength={100}
                                         placeholder="Promo Verano"
                                     />
-                                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                                    {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                                 </div>
                             </div>
 
@@ -529,7 +518,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                             <SelectItem value="fixed_amount">Monto Fijo (Bs)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.discount_type && <p className="text-sm text-red-500">{errors.discount_type}</p>}
+                                    {errors.discount_type && <p className="text-xs text-destructive">{errors.discount_type}</p>}
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="discount_value">
@@ -544,7 +533,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                         onChange={(e) => setData('discount_value', parseFloat(e.target.value) || 0)}
                                         disabled={!data.discount_type || data.discount_type === 'none'}
                                     />
-                                    {errors.discount_value && <p className="text-sm text-red-500">{errors.discount_value}</p>}
+                                    {errors.discount_value && <p className="text-xs text-destructive">{errors.discount_value}</p>}
                                 </div>
                             </div>
 
@@ -564,7 +553,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                     accept="image/*"
                                     onChange={(e) => setData('banner_path', e.target.files?.[0] || null)}
                                 />
-                                {errors.banner_path && <p className="text-sm text-red-500">{errors.banner_path}</p>}
+                                {errors.banner_path && <p className="text-xs text-destructive">{errors.banner_path}</p>}
                             </div>
 
                             {/* Dates */}
@@ -578,7 +567,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                         onChange={(e) => setData('starts_at', e.target.value)}
                                         required
                                     />
-                                    {errors.starts_at && <p className="text-sm text-red-500">{errors.starts_at}</p>}
+                                    {errors.starts_at && <p className="text-xs text-destructive">{errors.starts_at}</p>}
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="ends_at">Fin (Opcional)</Label>

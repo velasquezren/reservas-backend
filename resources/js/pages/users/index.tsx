@@ -1,13 +1,14 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Mail, Phone, Settings2, Trash2, User as UserIcon, Shield, Users } from 'lucide-react';
+import { Mail, Pencil, Phone, Plus, Shield, Trash2, Users, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -24,9 +25,7 @@ type UserRes = {
     created_at: string;
 };
 
-type Props = {
-    users: UserRes[];
-};
+type Props = { users: UserRes[] };
 
 export default function UsersIndex({ users }: Props) {
     const { flash } = usePage().props;
@@ -50,33 +49,22 @@ export default function UsersIndex({ users }: Props) {
 
     const openEditDialog = (user: UserRes) => {
         setEditingUser(user);
-        setData({
-            name: user.name,
-            email: user.email || '',
-            phone: user.phone || '',
-            password: '',
-            password_confirmation: '',
-        });
+        setData({ name: user.name, email: user.email || '', phone: user.phone || '', password: '', password_confirmation: '' });
         clearErrors();
         setIsDialogOpen(true);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         if (editingUser) {
-            put(`/users/${editingUser.id}`, {
-                onSuccess: () => setIsDialogOpen(false),
-            });
+            put(`/users/${editingUser.id}`, { onSuccess: () => setIsDialogOpen(false) });
         } else {
-            post('/users', {
-                onSuccess: () => setIsDialogOpen(false),
-            });
+            post('/users', { onSuccess: () => setIsDialogOpen(false) });
         }
     };
 
     const handleDelete = (user: UserRes) => {
-        if (confirm(`¿Estás seguro de eliminar a "${user.name}"? Esta acción no se puede deshacer.`)) {
+        if (confirm(`¿Eliminar a "${user.name}"? Esta acción no se puede deshacer.`)) {
             router.delete(`/users/${user.id}`);
         }
     };
@@ -85,108 +73,176 @@ export default function UsersIndex({ users }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Usuarios" />
 
-            <div className="flex flex-1 flex-col gap-6 p-6">
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+
+                {/* Flash */}
                 {flash.success && (
-                    <Alert>
-                        <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
+                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+                        <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Administración de Usuarios</CardTitle>
-                        <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
-                            <Shield className="mr-2 h-4 w-4" />
-                            Nuevo Usuario
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-muted/50">
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><UserIcon className="w-4 h-4" /> Nombre</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Mail className="w-4 h-4" /> Email</div></TableHead>
-                                    <TableHead className="font-semibold text-muted-foreground"><div className="flex items-center gap-2"><Phone className="w-4 h-4" /> Teléfono</div></TableHead>
-                                    <TableHead className="text-right font-semibold text-muted-foreground"><div className="flex items-center justify-end gap-2"><Settings2 className="w-4 h-4" /> Acciones</div></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-48 text-center">
-                                            <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                                <Users className="h-10 w-10 mb-3 text-muted/40" />
-                                                <p className="text-base font-medium text-foreground">No hay usuarios registrados</p>
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted">
+                            <Users className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-semibold tracking-tight">Usuarios</h1>
+                            <p className="text-sm text-muted-foreground">Administra las cuentas de acceso al sistema.</p>
+                        </div>
+                    </div>
+                    <Button onClick={openCreateDialog} className="mt-3 gap-2 self-start sm:mt-0 sm:self-auto">
+                        <Plus className="h-4 w-4" /> Nuevo Usuario
+                    </Button>
+                </div>
+
+                {/* Table */}
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>
+                                    <div className="flex items-center gap-1.5">
+                                        <Mail className="h-3.5 w-3.5" /> Email
+                                    </div>
+                                </TableHead>
+                                <TableHead>
+                                    <div className="flex items-center gap-1.5">
+                                        <Phone className="h-3.5 w-3.5" /> Teléfono
+                                    </div>
+                                </TableHead>
+                                <TableHead className="w-20 text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {users.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4}>
+                                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed mb-3">
+                                                <Users className="h-5 w-5 text-muted-foreground/60" />
                                             </div>
+                                            <p className="text-sm font-medium text-foreground">Sin usuarios</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">Crea el primero para comenzar.</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                users.map((user) => (
+                                    <TableRow key={user.id} className="group">
+                                        <TableCell className="font-medium">{user.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{user.email || <span className="italic text-muted-foreground/50">—</span>}</TableCell>
+                                        <TableCell className="text-muted-foreground">{user.phone || <span className="italic text-muted-foreground/50">—</span>}</TableCell>
+                                        <TableCell className="text-right">
+                                            <TooltipProvider delayDuration={300}>
+                                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(user)}>
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Editar</TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                onClick={() => handleDelete(user)}
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Eliminar</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
+                                            </TooltipProvider>
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    users.map((user) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="font-medium text-primary">{user.name}</TableCell>
-                                            <TableCell>{user.email || '—'}</TableCell>
-                                            <TableCell>{user.phone || '—'}</TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(user)}>
-                                                        <Shield className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(user)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
-            {/* Create/Edit Modal */}
+            {/* Create / Edit Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[440px]">
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</DialogTitle>
-                            <DialogDescription>
-                                {editingUser ? 'Actualiza los datos y la contraseña si lo deseas.' : 'Crea una cuenta para que el usuario pueda acceder al sistema.'}
-                            </DialogDescription>
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                                    <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div>
+                                    <DialogTitle>{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</DialogTitle>
+                                    <DialogDescription>
+                                        {editingUser
+                                            ? 'Actualiza los datos y la contraseña si lo deseas.'
+                                            : 'Crea una cuenta para que acceder al sistema.'}
+                                    </DialogDescription>
+                                </div>
+                            </div>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
+
+                        <Separator className="my-4" />
+
+                        <div className="grid gap-5">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Nombre</Label>
+                                <Label htmlFor="name">
+                                    Nombre <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
+                                    autoFocus
                                     required
                                 />
-                                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                             </div>
+
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">
+                                    Email{' '}
+                                    <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                 />
-                                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                             </div>
+
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Teléfono (Opcional)</Label>
+                                <Label htmlFor="phone">
+                                    Teléfono{' '}
+                                    <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
+                                </Label>
                                 <Input
                                     id="phone"
                                     value={data.phone}
                                     onChange={(e) => setData('phone', e.target.value)}
                                 />
-                                {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
+                                {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                             </div>
+
                             <div className="grid gap-2">
-                                <Label htmlFor="password">{editingUser ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}</Label>
+                                <Label htmlFor="password">
+                                    {editingUser ? (
+                                        <>Nueva contraseña <span className="text-xs font-normal text-muted-foreground">(opcional)</span></>
+                                    ) : (
+                                        <>Contraseña <span className="text-destructive">*</span></>
+                                    )}
+                                </Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -194,10 +250,11 @@ export default function UsersIndex({ users }: Props) {
                                     onChange={(e) => setData('password', e.target.value)}
                                     required={!editingUser}
                                 />
-                                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+                                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
                             </div>
+
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">Confirmar Contraseña</Label>
+                                <Label htmlFor="password_confirmation">Confirmar contraseña</Label>
                                 <Input
                                     id="password_confirmation"
                                     type="password"
@@ -207,12 +264,15 @@ export default function UsersIndex({ users }: Props) {
                                 />
                             </div>
                         </div>
+
+                        <Separator className="my-4" />
+
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={processing}>
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={processing}>
-                                {processing ? 'Guardando...' : 'Guardar'}
+                                {processing ? 'Guardando…' : editingUser ? 'Guardar cambios' : 'Crear usuario'}
                             </Button>
                         </DialogFooter>
                     </form>
