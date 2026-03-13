@@ -37,5 +37,8 @@ COPY . /var/www/html
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Run Render build script and cleanup
-RUN chmod +x render-build.sh \
+RUN chmod +x render-build.sh start.sh \
     && ./render-build.sh
+
+# Start container via start.sh
+ENTRYPOINT ["./start.sh"]
