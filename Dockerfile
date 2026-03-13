@@ -46,12 +46,12 @@ RUN npm run build
 # Generate app key, cache configuration
 RUN php artisan key:generate --force || true
 # Laravel 11 defaults to database cache in sqlite. Create an empty file so commands don't crash during build:
-RUN touch database/database.sqlite
-RUN php artisan optimize:clear
-RUN php artisan config:cache
-RUN php artisan event:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+RUN touch database/database.sqlite || true
 
-# Start container: Migrate database then run apache in foreground
-CMD php artisan migrate:fresh --seed --force && apache2-foreground
+# Start container: Cache views/routes, migrate database, then run apache
+CMD php artisan optimize:clear && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    php artisan migrate:fresh --seed --force && \
+    apache2-foreground
