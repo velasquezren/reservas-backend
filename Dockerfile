@@ -36,9 +36,20 @@ COPY . /var/www/html
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Run Render build script and cleanup
-RUN chmod +x render-build.sh start.sh \
-    && ./render-build.sh
+# Install PHP dependencies
+RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
-# Start container via start.sh
-ENTRYPOINT ["./start.sh"]
+# Install Node dependencies and build frontend assets
+RUN npm install
+RUN npm run build
+
+# Generate app key, cache configuration
+RUN php artisan key:generate --force || true
+RUN php artisan optimize:clear
+RUN php artisan config:cache
+RUN php artisan event:cache
+RUN php artisan route:cache
+RUN php artisan view:cache
+
+# Start container: Migrate database then run apache in foreground
+CMD php artisan migrate:fresh --seed --force && apache2-foreground
