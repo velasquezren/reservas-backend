@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: reservas-backend
+    env: php
+    plan: free
+    repo: https://github.com/velasquezren/reservas-backend.git
+    buildCommand: "./render-build.sh"
+    # Este comando inicia el servidor de PHP apuntando a public/ (donde está index.php de Laravel)
+    startCommand: "vendor/bin/heroku-php-apache2 public/"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          type: web
+          name: reservas-backend
+          envVarKey: RENDER_EXTERNAL_URL
+      # Forzar a Vite/Tailwind a cargar bien los recursos (js/css) por HTTPS
+      - key: ASSET_URL
+        fromService:
+          type: web
+          name: reservas-backend
+          envVarKey: RENDER_EXTERNAL_URL
+      # Configuración de base de datos PostgreSQL conectada automáticamente
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: reservas-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: reservas-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: reservas-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: reservas-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: reservas-db
+          property: password
+
+databases:
+  # Base de datos PostgreSQL alojada en Capa Gratuita
+  - name: reservas-db
+    databaseName: reservas
+    user: reservas_user
+    plan: free
