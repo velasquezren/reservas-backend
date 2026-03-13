@@ -71,6 +71,11 @@ class Business extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
     // ─── Local Scopes ─────────────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): void

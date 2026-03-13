@@ -20,7 +20,18 @@ class DashboardController extends Controller
         $today = Carbon::today('America/La_Paz');
         $prevMonth = $today->copy()->subMonth();
 
-        // ─── Core KPI stats (single queries each, index-friendly) ─────────
+        // ─── Core KPI stats (operational, reservation-centric) ─────────────
+        $monthTotal = Reservation::forBusiness($bid)
+            ->whereMonth('scheduled_date', $today->month)
+            ->whereYear('scheduled_date', $today->year)
+            ->count();
+
+        $monthCompleted = Reservation::forBusiness($bid)
+            ->where('status', ReservationStatus::Completed)
+            ->whereMonth('scheduled_date', $today->month)
+            ->whereYear('scheduled_date', $today->year)
+            ->count();
+
         $stats = [
             'today_reservations' => Reservation::forBusiness($bid)
                 ->whereDate('scheduled_date', $today->toDateString())
@@ -36,15 +47,11 @@ class DashboardController extends Controller
                 ->where('status', ReservationStatus::Confirmed)
                 ->whereDate('scheduled_date', '>=', $today->toDateString())
                 ->count(),
-            'revenue_month' => (int) Reservation::forBusiness($bid)
-                ->where('status', ReservationStatus::Completed)
-                ->whereMonth('scheduled_date', $today->month)
-                ->whereYear('scheduled_date', $today->year)
-                ->sum('total_amount'),
-            'total_month' => Reservation::forBusiness($bid)
-                ->whereMonth('scheduled_date', $today->month)
-                ->whereYear('scheduled_date', $today->year)
-                ->count(),
+            'total_month' => $monthTotal,
+            'completed_month' => $monthCompleted,
+            'completion_rate' => $monthTotal > 0
+                ? round(($monthCompleted / $monthTotal) * 100, 1)
+                : 0,
             'avg_rating' => round((float) Review::where('business_id', $bid)
                 ->where('status', 'published')
                 ->avg('rating'), 1),
@@ -54,10 +61,10 @@ class DashboardController extends Controller
         $revenueMoM = Reservation::forBusiness($bid)
             ->whereIn('status', [ReservationStatus::Completed])
             ->selectRaw("
-                SUM(CASE WHEN DATE(scheduled_date) >= ? AND DATE(scheduled_date) <= ?
-                         THEN total_amount ELSE 0 END) as current_month_total,
-                SUM(CASE WHEN DATE(scheduled_date) >= ? AND DATE(scheduled_date) <= ?
-                         THEN total_amount ELSE 0 END) as prev_month_total
+                COUNT(CASE WHEN DATE(scheduled_date) >= ? AND DATE(scheduled_date) <= ?
+                           THEN 1 END) as current_month_total,
+                COUNT(CASE WHEN DATE(scheduled_date) >= ? AND DATE(scheduled_date) <= ?
+                           THEN 1 END) as prev_month_total
             ", [
                 $today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString(),
                 $prevMonth->copy()->startOfMonth()->toDateString(), $prevMonth->copy()->endOfMonth()->toDateString(),
@@ -95,7 +102,6 @@ class DashboardController extends Controller
             ->where('status', ReservationStatus::Completed)
             ->select('user_id')
             ->selectRaw('COUNT(*) as total_reservations')
-            ->selectRaw('SUM(total_amount) as total_spent')
             ->selectRaw('SUM(party_size) as total_guests')
             ->selectRaw('MAX(scheduled_date) as last_visit')
             ->groupBy('user_id')
@@ -106,14 +112,13 @@ class DashboardController extends Controller
             ->map(fn ($row) => [
                 'user' => $row->user ? ['name' => $row->user->name, 'phone' => $row->user->phone] : null,
                 'total_reservations' => (int) $row->total_reservations,
-                'total_spent' => (int) $row->total_spent,
                 'total_guests' => (int) $row->total_guests,
                 'last_visit' => $row->last_visit,
             ]);
 
         // ─── Recent Reservations ──────────────────────────────────────────
         $recent = Reservation::forBusiness($bid)
-            ->select(['id', 'user_id', 'item_id', 'confirmation_code', 'status', 'scheduled_date', 'start_time', 'party_size', 'total_amount', 'created_at'])
+            ->select(['id', 'user_id', 'item_id', 'confirmation_code', 'status', 'scheduled_date', 'start_time', 'party_size', 'created_at'])
             ->with(['user:id,name,phone', 'item:id,name'])
             ->orderByDesc('created_at')
             ->limit(5)
@@ -125,7 +130,6 @@ class DashboardController extends Controller
                 'scheduled_date'    => $r->scheduled_date->format('Y-m-d'),
                 'start_time'        => substr((string) $r->start_time, 0, 5),
                 'party_size'        => $r->party_size,
-                'total_amount'      => $r->total_amount,
                 'user'              => $r->user
                     ? ['name' => $r->user->name, 'phone' => $r->user->phone]
                     : null,

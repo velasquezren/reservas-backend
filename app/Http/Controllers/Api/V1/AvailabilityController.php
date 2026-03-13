@@ -35,12 +35,17 @@ final class AvailabilityController extends Controller
         $partySize = isset($validated['party_size']) ? (int) $validated['party_size'] : null;
 
         // 1. Load all active reservable items (tables) for this business
-        $tables = $business->items()
+        $tablesQuery = $business->items()
             ->where('type', ItemType::Reservable->value)
             ->active()
             ->with('category', 'pricingRules')
-            ->orderBy('sort_order')
-            ->get();
+            ->orderBy('sort_order');
+
+        if ($partySize !== null) {
+            $tablesQuery->where('capacity', '>=', $partySize);
+        }
+
+        $tables = $tablesQuery->get();
 
         // 2. Load all active reservations for this business on the requested date
         $reservations = Reservation::query()

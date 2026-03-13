@@ -3,58 +3,63 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class UserWebController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $users = \App\Models\User::where('business_id', $request->user()->business_id)
+        $users = User::where('business_id', $request->user()->business_id)
             ->latest()
             ->get()
-            ->map(fn($u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $u->email,
-                'phone' => $u->phone,
+            ->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'phone'      => $u->phone,
                 'created_at' => $u->created_at->format('Y-m-d'),
             ]);
 
-        return \Inertia\Inertia::render('users/index', [
+        return Inertia::render('users/index', [
             'users' => $users,
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255|unique:users,email',
-            'phone' => 'nullable|string|max:50',
+            'name'     => 'required|string|max:255',
+            'email'    => 'nullable|email|max:255|unique:users,email',
+            'phone'    => 'nullable|string|max:50',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $validated['business_id'] = $request->user()->business_id;
-        $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        $validated['password']    = Hash::make($validated['password']);
 
-        \App\Models\User::create($validated);
+        User::create($validated);
 
         return back()->with('success', 'Usuario creado correctamente.');
     }
 
-    public function update(Request $request, \App\Models\User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         abort_unless($user->business_id === $request->user()->business_id, 403);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'nullable|string|max:50',
+            'name'     => 'required|string|max:255',
+            'email'    => 'nullable|email|max:255|unique:users,email,' . $user->id,
+            'phone'    => 'nullable|string|max:50',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if (!empty($validated['password'])) {
-            $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        if (! empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
@@ -64,7 +69,7 @@ class UserWebController extends Controller
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
 
-    public function destroy(Request $request, \App\Models\User $user)
+    public function destroy(Request $request, User $user): RedirectResponse
     {
         abort_unless($user->business_id === $request->user()->business_id, 403);
 

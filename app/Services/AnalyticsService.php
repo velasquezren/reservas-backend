@@ -175,8 +175,8 @@ final class AnalyticsService
             ->selectRaw("
                 items.id,
                 items.name,
-                SUM(reservation_items.quantity)  AS total_ordered,
-                SUM(reservation_items.subtotal)  AS total_revenue
+                SUM(reservation_items.quantity)                                  AS total_ordered,
+                SUM(reservation_items.unit_price * reservation_items.quantity)   AS total_revenue
             ")
             ->groupBy('items.id', 'items.name')
             ->orderByDesc('total_ordered')

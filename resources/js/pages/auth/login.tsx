@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,14 @@ export default function Login() {
 
         post('/login', {
             onFinish: () => reset('password'),
+        });
+    };
+
+    const handleQuickLogin = () => {
+        router.post('/login', {
+            email: 'admin@admin.com',
+            password: 'admin',
+            remember: false,
         });
     };
 
@@ -41,7 +49,7 @@ export default function Login() {
                             autoComplete="email"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="admin@reservas.bo"
+                            placeholder="email@example.com"
                         />
                         <InputError message={errors.email} />
                     </div>
@@ -60,9 +68,21 @@ export default function Login() {
                         <InputError message={errors.password} />
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={processing}>
-                        Ingresar
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                        <Button type="submit" className="w-full" disabled={processing}>
+                            Ingresar
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full"
+                            onClick={handleQuickLogin}
+                            disabled={processing}
+                        >
+                            Acceso Rápido (Admin)
+                        </Button>
+                    </div>
                 </div>
             </form>
         </AuthLayout>

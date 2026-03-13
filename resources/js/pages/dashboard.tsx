@@ -6,7 +6,6 @@ import {
     TrendingUp,
     TrendingDown,
     Users,
-    Banknote,
     Star,
     CalendarX,
     Clock,
@@ -48,7 +47,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 type Props = {
     stats: DashboardStats;
-    recent: Pick<Reservation, 'id' | 'confirmation_code' | 'status' | 'scheduled_date' | 'start_time' | 'party_size' | 'total_amount' | 'user' | 'item'>[];
+    recent: Pick<Reservation, 'id' | 'confirmation_code' | 'status' | 'scheduled_date' | 'start_time' | 'party_size' | 'user' | 'item'>[];
     revenue_mom: {
         current_month_total: number;
         prev_month_total: number;
@@ -174,13 +173,6 @@ export default function Dashboard({
         ].filter((d) => d.value > 0)
         : [];
 
-    /* Revenue area — values stay in centavos so formatBsAxis works */
-    const revenueAreaData = [
-        { name: 'Inicio ant.', value: 0 },
-        { name: 'Mes anterior', value: prevRevenue },
-        { name: 'Transición', value: Math.round((prevRevenue + currRevenue) / 2) },
-        { name: 'Mes actual', value: currRevenue },
-    ];
 
     /* Rates */
     const totalResolved =
@@ -222,15 +214,12 @@ export default function Dashboard({
             bg: 'bg-emerald-500/10',
         },
         {
-            title: 'Ingresos del Mes',
-            value: formatBs(stats.revenue_month),
-            subtitle: revenueChangePct
-                ? `${revenueIsUp ? '+' : ''}${revenueChangePct}% vs mes anterior`
-                : `${stats.total_month} reservas este mes`,
-            icon: Banknote,
+            title: 'Tasa de Completadas',
+            value: `${stats.completion_rate}%`,
+            subtitle: `${stats.completed_month} de ${stats.total_month} reservas`,
+            icon: CheckCircle2,
             color: 'text-violet-600 dark:text-violet-400',
             bg: 'bg-violet-500/10',
-            trend: revenueChangePct ? (revenueIsUp ? 'up' : 'down') : null,
         },
     ];
 
@@ -273,8 +262,6 @@ export default function Dashboard({
                             <CardContent>
                                 <p className="text-2xl font-bold tracking-tight">{kpi.value}</p>
                                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                    {kpi.trend === 'up' && <TrendingUp className="size-3 text-emerald-500" />}
-                                    {kpi.trend === 'down' && <TrendingDown className="size-3 text-red-500" />}
                                     {kpi.subtitle}
                                 </p>
                             </CardContent>
@@ -285,22 +272,27 @@ export default function Dashboard({
                 {/* ─── Charts Row ─────────────────────────────────────────── */}
                 <div className="grid gap-4 lg:grid-cols-7">
 
-                    {/* Revenue Area Chart */}
+                    {/* Reservation Volume Area Chart */}
                     <Card className="lg:col-span-4">
                         <CardHeader>
-                            <CardTitle className="text-base">Ingresos vs Mes Anterior</CardTitle>
+                            <CardTitle className="text-base">Volumen de Reservas</CardTitle>
                             <CardDescription>
-                                Comparación de ingresos completados entre periodos
+                                Comparación de reservas entre periodos
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="h-[280px] pr-2">
                             <ResponsiveContainer width="100%" height="100%" debounce={200}>
                                 <AreaChart
-                                    data={revenueAreaData}
+                                    data={[
+                                        { name: 'Inicio', value: 0 },
+                                        { name: 'Mes anterior', value: revenue_mom?.prev_month_total || 0 },
+                                        { name: 'Transición', value: Math.round(((revenue_mom?.prev_month_total || 0) + (revenue_mom?.current_month_total || 0)) / 2) },
+                                        { name: 'Mes actual', value: revenue_mom?.current_month_total || 0 },
+                                    ]}
                                     margin={{ top: 10, right: 12, left: 8, bottom: 0 }}
                                 >
                                     <defs>
-                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="hsl(262,83%,58%)" stopOpacity={0.25} />
                                             <stop offset="95%" stopColor="hsl(262,83%,58%)" stopOpacity={0} />
                                         </linearGradient>
@@ -320,8 +312,8 @@ export default function Dashboard({
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        width={72}
-                                        tickFormatter={formatBsAxis}
+                                        width={40}
+                                        allowDecimals={false}
                                         tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                                     />
                                     <Tooltip
@@ -332,7 +324,6 @@ export default function Dashboard({
                                         }}
                                         content={({ active, payload, label }) => {
                                             if (!active || !payload?.length) return null;
-                                            const raw = Number(payload[0]?.value ?? 0);
                                             return (
                                                 <ChartTooltipShell>
                                                     <p className="mb-1.5 font-medium text-foreground">{label}</p>
@@ -341,9 +332,9 @@ export default function Dashboard({
                                                             className="inline-block size-2.5 shrink-0 rounded-[2px]"
                                                             style={{ backgroundColor: 'hsl(262,83%,58%)' }}
                                                         />
-                                                        <span className="text-muted-foreground">Ingresos</span>
+                                                        <span className="text-muted-foreground">Reservas</span>
                                                         <span className="ml-auto pl-4 font-semibold tabular-nums text-foreground">
-                                                            {formatBs(raw)}
+                                                            {payload[0]?.value}
                                                         </span>
                                                     </div>
                                                 </ChartTooltipShell>
@@ -355,7 +346,7 @@ export default function Dashboard({
                                         dataKey="value"
                                         stroke="hsl(262,83%,58%)"
                                         strokeWidth={2}
-                                        fill="url(#colorRevenue)"
+                                        fill="url(#colorVolume)"
                                         dot={{ r: 3.5, fill: 'hsl(262,83%,58%)', strokeWidth: 0 }}
                                         activeDot={{
                                             r: 5,
@@ -605,10 +596,10 @@ export default function Dashboard({
                                             </div>
                                             <div className="text-right shrink-0">
                                                 <p className="text-sm font-semibold tabular-nums">
-                                                    {formatBs(client.total_spent)}
+                                                    {client.total_reservations} visitas
                                                 </p>
                                                 <p className="text-[11px] text-muted-foreground">
-                                                    {client.total_reservations} visitas
+                                                    {client.total_guests} personas
                                                 </p>
                                             </div>
                                         </div>
@@ -644,14 +635,13 @@ export default function Dashboard({
                                     <TableHead>Fecha</TableHead>
                                     <TableHead>Hora</TableHead>
                                     <TableHead className="text-center">Personas</TableHead>
-                                    <TableHead className="text-right">Total</TableHead>
                                     <TableHead className="text-right pr-6">Estado</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {recent.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="h-48 text-center">
+                                        <TableCell colSpan={7} className="h-48 text-center">
                                             <div className="flex flex-col items-center justify-center text-muted-foreground">
                                                 <CalendarX className="h-10 w-10 mb-3 opacity-30" />
                                                 <p className="text-sm font-medium text-foreground">
@@ -696,9 +686,6 @@ export default function Dashboard({
                                                     <Users className="size-3.5 text-muted-foreground" />
                                                     {r.party_size}
                                                 </span>
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium text-sm tabular-nums">
-                                                {formatBs(r.total_amount)}
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 {statusBadge(r.status)}

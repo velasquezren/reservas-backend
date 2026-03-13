@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\ItemStatus;
 use App\Enums\ItemType;
 use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
@@ -30,10 +31,13 @@ class ReservationWebController extends Controller
         $base = fn () => Reservation::forBusiness($bid);
 
         $stats = [
-            'today'       => $base()->whereDate('scheduled_date', $today)->count(),
-            'pending'     => $base()->where('status', ReservationStatus::Pending)->count(),
-            'confirmed'   => $base()->where('status', ReservationStatus::Confirmed)->count(),
-            'total_today' => $base()->whereDate('scheduled_date', $today)->sum('total_amount'),
+            'today'        => $base()->whereDate('scheduled_date', $today)->count(),
+            'pending'      => $base()->where('status', ReservationStatus::Pending)->count(),
+            'confirmed'    => $base()->where('status', ReservationStatus::Confirmed)->count(),
+            'guests_today' => (int) $base()
+                ->whereDate('scheduled_date', $today)
+                ->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Confirmed])
+                ->sum('party_size'),
         ];
 
         $query = Reservation::forBusiness($bid)
@@ -62,7 +66,7 @@ class ReservationWebController extends Controller
         // ── Data for the manual reservation creation dialog ────────────────
         $reservableItems = Item::forBusiness($bid)
             ->where('type', ItemType::Reservable)
-            ->where('status', 'active')
+            ->where('status', ItemStatus::Active)
             ->orderBy('name')
             ->get(['id', 'name', 'capacity', 'duration_minutes', 'base_price'])
             ->map(fn ($i) => [
@@ -75,7 +79,7 @@ class ReservationWebController extends Controller
 
         $menuItems = Item::forBusiness($bid)
             ->where('type', ItemType::MenuItem)
-            ->where('status', 'active')
+            ->where('status', ItemStatus::Active)
             ->orderBy('name')
             ->get(['id', 'name', 'base_price'])
             ->map(fn ($i) => [
@@ -99,7 +103,8 @@ class ReservationWebController extends Controller
                     'scheduled_date'    => $r->scheduled_date->format('Y-m-d'),
                     'start_time'        => substr((string) $r->start_time, 0, 5),
                     'party_size'        => $r->party_size,
-                    'total_amount'      => $r->total_amount,
+                    'duration_minutes'  => $r->duration_minutes,
+                    'notes'             => $r->notes,
                     'user'              => $r->user
                         ? ['name' => $r->user->name, 'phone' => $r->user->phone]
                         : null,
@@ -113,13 +118,20 @@ class ReservationWebController extends Controller
             'reservable_items' => $reservableItems,
             'menu_items'       => $menuItems,
             'clients'          => $clients,
+            'sources'          => collect(ReservationSource::cases())->map(fn ($s) => [
+                'value' => $s->value,
+                'label' => $s->label(),
+            ]),
         ]);
     }
 
     public function store(StoreReservationRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $validated['source'] = ReservationSource::WalkIn->value;
+        // Admin can choose source (walk_in or phone); default to walk_in
+        if (empty($validated['source']) || ! in_array($validated['source'], ['walk_in', 'phone'])) {
+            $validated['source'] = ReservationSource::WalkIn->value;
+        }
         $validated['business_id'] = $request->user()->business_id;
 
         // Ensure the client and item belong to this business

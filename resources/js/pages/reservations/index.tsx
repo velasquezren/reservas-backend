@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     Calendar, Search, MapPin, Users, Banknote, Activity,
     Settings2, User, Hash, CalendarX, Clock, CheckCircle2,
-    TrendingUp, X, Plus, ChefHat, Minus, Phone, ClipboardList,
+    X, Plus, ChefHat, Minus, Phone, ClipboardList,
     AlertCircle,
     XCircle,
 } from 'lucide-react';
@@ -34,7 +34,7 @@ type Stats = {
     today: number;
     pending: number;
     confirmed: number;
-    total_today: number;
+    guests_today: number;
 };
 
 type ReservableItem = {
@@ -58,7 +58,7 @@ type Client = {
 };
 
 type Props = {
-    reservations: PaginatedData<Pick<Reservation, 'id' | 'confirmation_code' | 'status' | 'scheduled_date' | 'start_time' | 'party_size' | 'total_amount' | 'user' | 'item' | 'source'>>;
+    reservations: PaginatedData<Pick<Reservation, 'id' | 'confirmation_code' | 'status' | 'scheduled_date' | 'start_time' | 'party_size' | 'duration_minutes' | 'notes' | 'user' | 'item' | 'source'>>;
     filters: { status?: string; date?: string; search?: string };
     stats: Stats;
     reservable_items: ReservableItem[];
@@ -526,7 +526,7 @@ export default function ReservationsIndex({ reservations, filters, stats, reserv
                         { label: 'Reservas Hoy', value: stats.today, icon: Calendar, bg: 'bg-violet-100 dark:bg-violet-900/30', color: 'text-violet-600 dark:text-violet-400' },
                         { label: 'Pendientes', value: stats.pending, icon: Clock, bg: 'bg-amber-100 dark:bg-amber-900/30', color: 'text-amber-600 dark:text-amber-400' },
                         { label: 'Confirmadas', value: stats.confirmed, icon: CheckCircle2, bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' },
-                        { label: 'Ingresos Hoy', value: formatBs(stats.total_today), icon: TrendingUp, bg: 'bg-emerald-100 dark:bg-emerald-900/30', color: 'text-emerald-600 dark:text-emerald-400' },
+                        { label: 'Personas Hoy', value: stats.guests_today, icon: Users, bg: 'bg-emerald-100 dark:bg-emerald-900/30', color: 'text-emerald-600 dark:text-emerald-400' },
                     ].map(kpi => (
                         <Card key={kpi.label} className="border-dashed">
                             <CardContent className="flex items-center gap-3 p-4">
@@ -620,7 +620,7 @@ export default function ReservationsIndex({ reservations, filters, stats, reserv
                                         <div className="flex items-center gap-2"><Users className="w-4 h-4" /> Pers.</div>
                                     </TableHead>
                                     <TableHead className="font-semibold text-muted-foreground">
-                                        <div className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Total</div>
+                                        <div className="flex items-center gap-2"><Clock className="w-4 h-4" /> Duración</div>
                                     </TableHead>
                                     <TableHead className="font-semibold text-muted-foreground">
                                         <div className="flex items-center gap-2"><Activity className="w-4 h-4" /> Estado</div>
@@ -662,13 +662,13 @@ export default function ReservationsIndex({ reservations, filters, stats, reserv
                                                 <div className="text-xs text-muted-foreground">{r.start_time}</div>
                                             </TableCell>
                                             <TableCell className="text-sm">{r.party_size}</TableCell>
-                                            <TableCell className="whitespace-nowrap font-medium text-sm">
-                                                {formatBs(r.total_amount)}
+                                            <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                                                {r.duration_minutes} min
                                             </TableCell>
                                             <TableCell><StatusBadge status={r.status} /></TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <TooltipProvider delayDuration={300}>
-                                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex justify-end gap-1 transition-opacity">
                                                         {r.status === 'pending' && (
                                                             <>
                                                                 <Tooltip>

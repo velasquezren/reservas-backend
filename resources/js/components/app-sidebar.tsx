@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CalendarCheck, FolderOpen, LayoutGrid, Package2, Percent, Star, Users } from 'lucide-react';
+import { BookOpen, CalendarCheck, Clock, FolderOpen, LayoutGrid, Package2, Percent, Star, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -39,6 +39,11 @@ const navGroups = [
                 title: 'Calendario',
                 href: '/reservations/calendar',
                 icon: CalendarCheck,
+            },
+            {
+                title: 'Lista de espera',
+                href: '/waitlists',
+                icon: Clock,
             },
         ],
     },

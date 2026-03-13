@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
     // ─── Authentication (public) ──────────────────────────────────────────────
-    // ─── Authentication (public) ──────────────────────────────────────────────
-    // TODO: Standard email/password endpoints if necessary via API.
+    // Standard email/password endpoints if necessary via API.
 
     // ─── Public Catalogue ─────────────────────────────────────────────────────
     Route::get('businesses',          [BusinessController::class, 'index'])->name('businesses.index');
@@ -39,6 +38,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
     // Public events (for Next.js banners — only active events)
     Route::get('businesses/{business}/events', [EventController::class, 'index'])->name('events.public.index');
+
+    // Public promotions (for Next.js banners — only active promotions with banners)
+    Route::get('businesses/{business}/promotions', [PromotionController::class, 'index'])->name('promotions.public.index');
 
     // ─── Protected (Customer + Business owner) ────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {

@@ -83,21 +83,13 @@ class Promotion extends Model
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    /** True if global uses are not yet exhausted */
+    /**
+     * True if global uses are not yet exhausted.
+     * Per-user limit check is done in PromotionService::findAndValidate().
+     */
     public function hasUsesRemaining(): bool
     {
         return $this->max_uses === null || $this->current_uses < $this->max_uses;
-    }
-
-    /** True if user has not exceeded per-user limit */
-    public function hasUsesRemainingForUser(string $userId): bool
-    {
-        if ($this->max_uses_per_user === null) {
-            return true;
-        }
-
-        // Count resolved in PromotionService to avoid N+1 here
-        return true;
     }
 
     public function isCurrentlyValid(): bool

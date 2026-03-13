@@ -6,6 +6,8 @@ use App\Http\Controllers\Web\EventWebController;
 use App\Http\Controllers\Web\PromotionWebController;
 use App\Http\Controllers\Web\ReservationWebController;
 use App\Http\Controllers\Web\ReviewWebController;
+use App\Http\Controllers\Web\UserWebController;
+use App\Http\Controllers\Web\WaitlistWebController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -36,7 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', [CategoryWebController::class, 'index'])->name('index');
         Route::post('/', [CategoryWebController::class, 'store'])->name('store');
-        Route::put('{category}', [CategoryWebController::class, 'update'])->name('update');
+        Route::match(['put', 'patch'], '{category}', [CategoryWebController::class, 'update'])->name('update');
         Route::delete('{category}', [CategoryWebController::class, 'destroy'])->name('destroy');
     });
 
@@ -44,7 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('items')->name('items.')->group(function () {
         Route::get('/', [ItemWebController::class, 'index'])->name('index');
         Route::post('/', [ItemWebController::class, 'store'])->name('store');
-        Route::put('{item}', [ItemWebController::class, 'update'])->name('update');
+        Route::match(['put', 'patch'], '{item}', [ItemWebController::class, 'update'])->name('update');
         Route::delete('{item}', [ItemWebController::class, 'destroy'])->name('destroy');
     });
 
@@ -74,10 +76,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Users
     Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Web\UserWebController::class, 'index'])->name('index');
-        Route::post('/', [\App\Http\Controllers\Web\UserWebController::class, 'store'])->name('store');
-        Route::put('{user}', [\App\Http\Controllers\Web\UserWebController::class, 'update'])->name('update');
-        Route::delete('{user}', [\App\Http\Controllers\Web\UserWebController::class, 'destroy'])->name('destroy');
+        Route::get('/', [UserWebController::class, 'index'])->name('index');
+        Route::post('/', [UserWebController::class, 'store'])->name('store');
+        Route::put('{user}', [UserWebController::class, 'update'])->name('update');
+        Route::delete('{user}', [UserWebController::class, 'destroy'])->name('destroy');
+    });
+
+    // Waitlists
+    Route::prefix('waitlists')->name('waitlists.')->group(function () {
+        Route::get('/', [WaitlistWebController::class, 'index'])->name('index');
+        Route::delete('{waitlist}', [WaitlistWebController::class, 'destroy'])->name('destroy');
     });
 });
 

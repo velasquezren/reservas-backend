@@ -1,4 +1,4 @@
-﻿import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import {
     CalendarDays, Pencil, Plus, Trash2, Eye, Zap, CalendarCheck2, Image, PartyPopper,
 } from 'lucide-react';
@@ -107,7 +107,7 @@ export default function EventsIndex({ events, stats, banners }: Props) {
     };
 
     const handleDelete = (event: Event) => {
-        if (confirm(`Â¿EstÃ¡s seguro de eliminar el evento "${event.name}"?`)) {
+        if (confirm(`¿Estás seguro de eliminar el evento "${event.name}"?`)) {
             router.delete(`/events/${event.id}`);
         }
     };
@@ -190,7 +190,7 @@ export default function EventsIndex({ events, stats, banners }: Props) {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <TooltipProvider delayDuration={300}>
-                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex justify-end gap-1 transition-opacity">
                                             {event.banner_url && (
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -281,26 +281,27 @@ export default function EventsIndex({ events, stats, banners }: Props) {
                         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                             Banners activos
                         </h2>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {banners.map(b => (
                                 <button
                                     key={b.id}
                                     onClick={() => setBannerViewer(b.url)}
-                                    className="group overflow-hidden rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow text-left"
+                                    className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow hover:shadow-lg transition-all text-left"
                                 >
-                                    <div className="relative overflow-hidden">
+                                    <div className="relative aspect-video overflow-hidden">
                                         <img
                                             src={b.url}
                                             alt={b.name}
-                                            className="h-36 w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                            <Eye className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 drop-shadow" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                                            <p className="text-sm font-semibold text-white drop-shadow-lg truncate">{b.name}</p>
+                                            <p className="text-xs text-white/70 mt-0.5">Clic para ampliar</p>
                                         </div>
-                                    </div>
-                                    <div className="p-3 bg-muted/30">
-                                        <p className="text-sm font-medium truncate">{b.name}</p>
-                                        <p className="text-xs text-muted-foreground">Ver banner</p>
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                            <Eye className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 drop-shadow-lg" />
+                                        </div>
                                     </div>
                                 </button>
                             ))}

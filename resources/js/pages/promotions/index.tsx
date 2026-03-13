@@ -1,4 +1,4 @@
-﻿import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Tag, CalendarDays, Activity, Percent, Settings2, Ticket,
     Pencil, Plus, Trash2, Hash, Copy, Check, Eye, Image, Zap, BarChart3,
@@ -279,7 +279,7 @@ export default function PromotionsIndex({ promotions, stats, banners }: Props) {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <TooltipProvider delayDuration={300}>
-                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex justify-end gap-1 transition-opacity">
                                             {promo.banner_url && (
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>

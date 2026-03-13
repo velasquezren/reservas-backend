@@ -135,15 +135,15 @@ export type DashboardStats = {
     today_guests: number;
     pending: number;
     upcoming_confirmed: number;
-    revenue_month: number; // centavos
     total_month: number;
+    completed_month: number;
+    completion_rate: number; // percentage 0-100
     avg_rating: number;
 };
 
 export type TopClient = {
     user: { name: string; phone: string } | null;
     total_reservations: number;
-    total_spent: number; // centavos
     total_guests: number;
     last_visit: string;
 };
