@@ -27,11 +27,6 @@ const sidebarNavItems: NavItem[] = [
         href: show(),
         icon: null,
     },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
-    },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
