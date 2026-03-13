@@ -1,12 +1,9 @@
 services:
   - type: web
     name: reservas-backend
-    env: php
+    env: docker
     plan: free
     repo: https://github.com/velasquezren/reservas-backend.git
-    buildCommand: "./render-build.sh"
-    # Este comando inicia el servidor de PHP apuntando a public/ (donde está index.php de Laravel)
-    startCommand: "vendor/bin/heroku-php-apache2 public/"
     envVars:
       - key: APP_ENV
         value: production
