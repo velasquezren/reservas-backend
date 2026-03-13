@@ -45,6 +45,8 @@ RUN npm run build
 
 # Generate app key, cache configuration
 RUN php artisan key:generate --force || true
+# Laravel 11 defaults to database cache in sqlite. Create an empty file so commands don't crash during build:
+RUN touch database/database.sqlite
 RUN php artisan optimize:clear
 RUN php artisan config:cache
 RUN php artisan event:cache
