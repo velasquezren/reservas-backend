@@ -49,9 +49,9 @@ RUN php artisan key:generate --force || true
 RUN touch database/database.sqlite || true
 
 # Start container: Cache views/routes, migrate database, then run apache
-CMD php artisan optimize:clear && \
+CMD php artisan migrate:fresh --seed --force && \
+    php artisan optimize:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
-    php artisan migrate:fresh --seed --force && \
     apache2-foreground
